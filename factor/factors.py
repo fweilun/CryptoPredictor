@@ -10,12 +10,6 @@ class Factor(ABC):
         return "not defined ..."
 
 
-class Factor(ABC):
-    def __init__(self): ...
-    def Gen(self, cls, x:pd.DataFrame) -> float: ...
-    def __str__(self):
-        return "not defined ..."
-
 
 class Cross(Factor):
     need = ["Adj Close"]

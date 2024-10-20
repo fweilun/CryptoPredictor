@@ -1,8 +1,11 @@
 import yfinance as yf
 import pandas as pd
+from datetime import datetime
 import requests, json
 from abc import ABC
 from typing import List
+from binance.spot import Spot
+import time
 
 
 class Crawler(ABC):
@@ -17,7 +20,7 @@ class SingleUSStock(Crawler):
         self.end_date = end_date
         self.stock_id = stock_id
     
-    def Get(self):
+    def Get(self) -> pd.DataFrame:
         # etfs = ['SPY', 'DIA', 'QQQ']
         data = yf.download(self.stock_id, start=self.start_date, end=self.end_date, interval='1d')
         return data
@@ -36,7 +39,7 @@ class UnEmployRate(Crawler):
         self.start_date = start_date
         self.end_date = end_date
     
-    def Get(self):
+    def Get(self) -> pd.DataFrame:
         headers = {'Content-type': 'application/json'}
         
         # partition
@@ -78,3 +81,48 @@ class UnEmployRate(Crawler):
         unemploy_result.Name = "UnEmployRate"
         unemploy_result
         return unemploy_result
+    
+    from binance.spot import Spot
+
+
+
+
+class BinaceData(Crawler):
+    def __init__(self,symbol="BTCUSDT",start_date="2005", end_date="2024", interval="4h"):
+        self.start_date = start_date
+        self.end_date = end_date
+        self.symbol = symbol
+        self.interval = interval
+    
+    def Get(self) -> pd.DataFrame:
+        client = Spot()
+        start_time = int(datetime.strptime(self.start_date, "%Y-%m-%d").timestamp() * 1000)
+        end_time = int(datetime.strptime(self.end_date, "%Y-%m-%d").timestamp() * 1000)
+        tmp_time = start_time
+        record_df = []
+        while tmp_time < end_time:
+            df = client.klines(self.symbol, interval=self.interval, startTime=tmp_time, endTime=end_time, limit=10000)
+            df = pd.DataFrame(df, columns=[
+                "timestamp", "open", "high", "low", "close", "volume", "close_time", 
+                "quote_asset_volume", "number_of_trades", "taker_buy_base_asset_volume", 
+                "taker_buy_quote_asset_volume", "ignore"
+            ])
+            record_df.append(df)
+            tmp_time = df["timestamp"].max()
+            time.sleep(0.5)
+        
+        df = pd.concat(record_df).set_index("timestamp")
+        df.index = pd.to_datetime(df.index, unit="ms")
+        df = df.sort_index()
+        df["close"] = df["close"].astype(float)
+        return df[~df.duplicated()]
+    
+    
+    
+
+def renew_baseline_data():
+    df = BinaceData("BTCUSDT", start_date="2020-01-01", end_date="2024-05-05")
+    df.Get().to_csv("/Users/user/Desktop/stock/factor-model/data/base-BTCUSDT.csv")
+    
+if __name__ == "__main__":
+    renew_baseline_data()
