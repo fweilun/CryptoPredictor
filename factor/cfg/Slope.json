@@ -1,0 +1,15 @@
+{
+    "description": "slope of price",
+    "signal_list": [
+        {"signal": "Slope","argument": {"n": 3}},
+        {"signal": "Slope","argument": {"n": 5}},
+        {"signal": "Slope","argument": {"n": 10}},
+        {"signal": "Slope","argument": {"n": 20}},
+        {"signal": "Slope","argument": {"n": 50}},
+        {"signal": "Slope","argument": {"n": 100}},
+        {"signal": "Slope","argument": {"n": 200}},
+        {"signal": "Slope","argument": {"n": 300}},
+        {"signal": "Slope","argument": {"n": 400}},
+        {"signal": "Slope","argument": {"n": 900}}
+    ]
+}

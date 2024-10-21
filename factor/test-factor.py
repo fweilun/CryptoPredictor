@@ -4,6 +4,8 @@ import pandas as pd
 import importlib, json
 from factor.factors import Factor
 from factor.signal.Cross import Cross
+import matplotlib.pyplot as plt
+import os, shutil
 
 '''
 1. load data
@@ -11,10 +13,11 @@ from factor.signal.Cross import Cross
 3. load result
 '''
 
-def maker(X, delay=100):
+def maker(X, delay=100, hours:int=24):
     train = []
     test = []
-    X["return"] = X["close"].pct_change().shift(-1)
+    X["return"] = X["close"].pct_change(hours//4).shift(-hours//4)
+    # X["return"] = X["close"].pct_change(4).shift(-4)
     X = X.dropna()
     y = X["return"]
     Colums = ["close", "volume"]
@@ -36,19 +39,33 @@ if __name__ == "__main__":
     f = open(f"factor/cfg/{signal_name}.json", 'r')
     jfile = json.load(f)
     
-    data_path = "factor/data/base-BTCUSDT.csv"
+    data_path = "data/base-BTCUSDT.csv"
     df = pd.read_csv(data_path)
-    train, test = maker(df)
+    hours = 72
+    train, test = maker(df, delay=1000, hours=hours)
+    print(f"start time: {df['timestamp'].iloc[0]}")
+    print(f"end time: {df['timestamp'].iloc[-1]}")
+    print(f"number of cases: {len(train)}")
+    print(f"predict interval: {hours}hrs")
     
     assert("signal_list" in jfile), "wrong config.."
     for config in jfile["signal_list"]:
         assert("argument" in config), "wrong config.."
-        
         arg = config["argument"]
         base_factor = BaseClass(**arg)
         
         res = []
         for (x, y) in zip(train, test):
             res.append(base_factor.Gen(x))
-            
-        print(f"{str(base_factor):<13}: {np.corrcoef(res, test)[0][1]:0.3f}")
+
+        print(f"{str(base_factor):<20}: {np.corrcoef(res, test)[0][1]:0.3f}")
+        
+        directory_path = f"factor/result/{signal_name}/{str(base_factor).replace(' ','_')}/"
+        if os.path.exists(directory_path):
+            shutil.rmtree(directory_path)
+        os.makedirs(directory_path)
+        
+        plt.figure(figsize=(16,5))
+        plt.plot(res)
+        save_path = directory_path+"value.png"
+        plt.savefig(save_path)

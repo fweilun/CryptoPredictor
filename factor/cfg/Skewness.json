@@ -1,0 +1,12 @@
+{
+    "description": "skewness of returns",
+    "signal_list": [
+        {"signal": "Skewness","argument": {"n": 3}},
+        {"signal": "Skewness","argument": {"n": 5}},
+        {"signal": "Skewness","argument": {"n": 10}},
+        {"signal": "Skewness","argument": {"n": 20}},
+        {"signal": "Skewness","argument": {"n": 50}},
+        {"signal": "Skewness","argument": {"n": 100}},
+        {"signal": "Skewness","argument": {"n": 200}}
+    ]
+}
