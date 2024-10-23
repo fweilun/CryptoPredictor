@@ -1,0 +1,14 @@
+{
+    "description": "skewness of returns",
+    "signal_list": [
+        {"signal": "weilun02","argument": {"n": 3}},
+        {"signal": "weilun02","argument": {"n": 5}},
+        {"signal": "weilun02","argument": {"n": 10}},
+        {"signal": "weilun02","argument": {"n": 20}},
+        {"signal": "weilun02","argument": {"n": 50}},
+        {"signal": "weilun02","argument": {"n": 100}},
+        {"signal": "weilun02","argument": {"n": 200}},
+        {"signal": "weilun02","argument": {"n": 300}},
+        {"signal": "weilun02","argument": {"n": 400}}
+    ]
+}
