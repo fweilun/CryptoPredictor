@@ -4,7 +4,7 @@ import numpy as np
 
 
 
-class weilun01(Factor):
+class weilun02(Factor):
     need = ["close"]
     cfg = {}
     def __init__(self, n:int=-1):
