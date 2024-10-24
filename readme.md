@@ -1,3 +1,5 @@
+run `pip install -r requirements.txt` to install all dependencies
+
 # How to Create a signal
 The name of signal file, cfg file and class should be the same.
 ex.
@@ -10,7 +12,7 @@ ex.
 1. clone the file to local workspace.
 2. add signal file to signal folder.
 3. add config file to cfg folder.
-4. cd to base directory (factor-model).
+4. cd to base directory (CryptoPredictor).
 5. run python -m factor.test-factor
 
 
