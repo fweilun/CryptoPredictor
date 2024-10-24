@@ -1,0 +1,13 @@
+# required modules
+# use pip install -r requirements.txt to install all the required modules
+
+yfinance
+pandas
+datetime
+requests
+typing
+binance-connector
+ccxt
+matplotlib
+numpy
+importlib
