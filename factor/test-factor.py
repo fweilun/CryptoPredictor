@@ -6,49 +6,47 @@ from factor.factors import Factor
 from factor.signal.Cross import Cross
 import matplotlib.pyplot as plt
 import os, shutil
+from data.maker import maker
 
-data_file_path = "data"
 
-'''
-1. load data
-2. load program
-3. load result
-'''
-
-def maker(X, delay=100, hours:int=24):
-    train = []
-    test = []
-    X["return"] = X["close"].pct_change(hours//4).shift(-hours//4)
-    X = X.dropna()
-    y = X["return"]
-    Colums = ["close", "volume"]
-    for i in range(len(X) - delay):
-        start, end = i, i + delay
-        predict = i + delay
-        train.append(X[Colums][start:end])
-        test.append(y[predict])
+# def maker(X, delay=100, hours:int=24):
+#     train = []
+#     test = []
+#     X["return"] = X["close"].pct_change(hours//4).shift(-hours//4)
+#     X = X.dropna()
+#     y = X["return"]
+#     Colums = ["close", "volume"]
+#     for i in range(len(X) - delay):
+#         start, end = i, i + delay
+#         predict = i + delay
+#         train.append(X[Colums][start:end])
+#         test.append(y[predict])
     
-    return train, test
+#     return train, test
 
-def maker_group(X, delay=100, hours:int=24):
-    train = []
-    test = []
-    X["return"] = X["close"].pct_change(hours//4).shift(-hours//4)
-    for file in os.listdir("data"):
-        path = os.path.join(data_file_path, file)
-        X[file + "_close"] = pd.read_csv(path)["close"]
+# def maker_group(X, delay=100, hours:int=24):
+#     train = []
+#     test = []
+#     X["return"] = X["close"].pct_change(hours//4).shift(-hours//4)
+#     for file in os.listdir("data"):
+#         path = os.path.join(data_file_path, file)
+#         X[file + "_close"] = pd.read_csv(path)["close"]
     
-    X = X.dropna()
-    y = X["return"]
+#     X = X.dropna()
+#     y = X["return"]
     
-    for i in range(len(X) - delay):
-        start, end = i, i + delay
-        predict = i + delay
-        train.append(X[start:end])
-        test.append(y[predict])
+#     for i in range(len(X) - delay):
+#         start, end = i, i + delay
+#         predict = i + delay
+#         train.append(X[start:end])
+#         test.append(y[predict])
     
-    return train, test, pd.to_datetime(X['timestamp'])[:len(X) - delay]
+#     return train, test, pd.to_datetime(X['timestamp'])[:len(X) - delay]
 
+TARGET = "BTC"
+DELAY = 1000
+HOURS = 24
+SPLIT_RATE = 0.8
 
 
 if __name__ == "__main__":
@@ -59,14 +57,14 @@ if __name__ == "__main__":
     f = open(f"factor/cfg/{signal_name}.json", 'r')
     jfile = json.load(f)
     
-    data_path = "data/base-BTCUSDT.csv"
+    data_path = "data/storage/BTCUSDT.csv"
     df = pd.read_csv(data_path)
-    hours = 72
-    train, test, index = maker_group(df, delay=1000, hours=hours)
+    train, test = maker(target=TARGET, delay=DELAY, hours=HOURS)
+    
     print(f"start time: {df['timestamp'].iloc[0]}")
     print(f"end time: {df['timestamp'].iloc[-1]}")
     print(f"number of cases: {len(train)}")
-    print(f"predict interval: {hours}hrs")
+    print(f"predict interval: {HOURS}hrs")
     
     assert("signal_list" in jfile), "wrong config.."
     for config in jfile["signal_list"]:
@@ -86,6 +84,6 @@ if __name__ == "__main__":
         os.makedirs(directory_path)
         
         plt.figure(figsize=(16,5))
-        plt.plot(index, res)
+        plt.plot(res)
         save_path = directory_path+"value.png"
         plt.savefig(save_path)

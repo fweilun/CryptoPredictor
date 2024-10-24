@@ -2,7 +2,6 @@ import os, importlib, json
 from .factors import Factor as BaseFactor
 
 cfg = {}
-
 module_dir = os.path.dirname(__file__)
 json_dir = os.path.dirname(__file__)
 cfg_dir = os.path.join(module_dir, 'cfg')

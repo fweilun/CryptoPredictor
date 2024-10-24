@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 from abc import ABC
 
 
@@ -11,6 +10,9 @@ class Factor(ABC):
 
 
 
+
+
+'''
 class Cross(Factor):
     need = ["Adj Close"]
     def __init__(self, n1:int, n2:int):
@@ -222,3 +224,5 @@ class UnEmployeeRate(Factor):
     
     def __str__(self):
         return f"UnEmploy Rate {self.n}"
+    
+'''
