@@ -6,13 +6,12 @@ from abc import ABC
 from typing import List
 from binance.spot import Spot
 import time
-
+import ccxt
+from config.symbols import Symbols
 
 class Crawler(ABC):
     def __init__(self): ...
     def Get(self) -> pd.DataFrame: ...
-    
-
 
 class SingleUSStock(Crawler):
     def __init__(self,start_date:str = '2005-01-01', end_date:str='2024-10-04', stock_id:str="QQQ"):
@@ -24,10 +23,6 @@ class SingleUSStock(Crawler):
         # etfs = ['SPY', 'DIA', 'QQQ']
         data = yf.download(self.stock_id, start=self.start_date, end=self.end_date, interval='1d')
         return data
-
-
-
-
 
 class UnEmployRate(Crawler):
     def __init__(self, start_date="2005", end_date="2024"):
@@ -82,11 +77,6 @@ class UnEmployRate(Crawler):
         unemploy_result
         return unemploy_result
     
-    from binance.spot import Spot
-
-
-
-
 class BinaceData(Crawler):
     def __init__(self,symbol="BTCUSDT",start_date="2005", end_date="2024", interval="4h"):
         self.start_date = start_date
@@ -117,40 +107,58 @@ class BinaceData(Crawler):
         df["close"] = df["close"].astype(float)
         return df[~df.duplicated()]
     
-    
-    
-crypto_pairs = [
-    "BTC/USDT",  # 比特幣
-    "ETH/USDT",  # 以太幣
-    "BNB/USDT",  # 幣安幣
-    "XRP/USDT",  # 瑞波幣
-    "ADA/USDT",  # 艾達幣 (Cardano)
-    "SOL/USDT",  # Solana
-    "DOGE/USDT", # 狗狗幣
-    "DOT/USDT",  # Polkadot
-    "MATIC/USDT",# Polygon
-    "LTC/USDT",  # 萊特幣
-    "AVAX/USDT", # Avalanche
-    "SHIB/USDT", # Shiba Inu
-    "LINK/USDT", # Chainlink
-    "ATOM/USDT", # Cosmos
-    "FTM/USDT",  # Fantom
-    "SAND/USDT", # Sandbox
-    "AXS/USDT",  # Axie Infinity
-    "UNI/USDT",  # Uniswap
-    "NEAR/USDT", # NEAR Protocol
-    "ALGO/USDT", # Algorand
-    "AAVE/USDT"  # Aave
-]
+class FundingRate(Crawler):
+    def __init__(self, symbol = "BTCUSDT", start_date="2017-01-01", end_date="2024-01-01"):
+        self.start_date = start_date
+        self.end_date = end_date
+        self.symbol = symbol
 
-    
+    def Get(self) -> pd.DataFrame:
+        binance = ccxt.binance()
+        binance.options = {
+            'defaultType': 'future',
+            'adjustForTimeDifference': True
+        }
 
-def renew_baseline_data():
-    for crypto in crypto_pairs:
-        print("".join(crypto.split("/")))
-        crypto_name = "".join(crypto.split("/"))
-        df = BinaceData(crypto_name, start_date="2020-01-01", end_date="2024-05-05")
-        df.Get().to_csv(f"/Users/user/Desktop/stock/factor-model/data/base-{crypto_name}.csv")
-    
+        start_time = int(datetime.strptime(self.start_date, "%Y-%m-%d").timestamp() * 1000)
+        end_time = int(datetime.strptime(self.end_date, "%Y-%m-%d").timestamp() * 1000)
+        tmp_time = start_time
+
+        record_df = []
+        while tmp_time < end_time:
+            df = binance.fetch_funding_rate_history(symbol=self.symbol, since=tmp_time, params={"until": end_time})
+            df = [ data["info"] for data in df] 
+            df = pd.DataFrame(df)
+            record_df.append(df)
+            tmp_time = int(df["fundingTime"].max())
+
+        df = pd.concat(record_df).set_index("fundingTime")
+        df.index = pd.to_datetime(df.index, unit="ms")
+        df.sort_index()
+
+        df["fundingRate"] = df["fundingRate"].astype(float)
+
+        df.drop(columns=["markPrice"], inplace=True)
+
+        return df
+
+def renew_data():
+    start_date = "2020-01-01"
+    end_date = "2024-01-01"
+    base_path = "./data/storage"
+
+    for symbols in Symbols:
+        print(symbols.value)
+        base = "USDT"
+        pair = symbols.value + base
+
+        binance_data = BinaceData(symbol=pair, start_date=start_date, end_date=end_date)
+        base_df = binance_data.Get()
+        base_df.to_csv(f"{base_path}/base/{pair}.csv")
+
+        funding_rate = FundingRate(symbol=pair, start_date=start_date, end_date=end_date)
+        funding_rate_df = funding_rate.Get()
+        funding_rate_df.to_csv(f"{base_path}/funding-rate/{pair}.csv")
+
 if __name__ == "__main__":
-    renew_baseline_data()
+    renew_data()
