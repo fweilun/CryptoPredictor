@@ -6,6 +6,7 @@ from abc import ABC
 from typing import List
 from binance.spot import Spot
 import time
+import ccxt
 
 
 class Crawler(ABC):
@@ -116,13 +117,57 @@ class BinaceData(Crawler):
         df = df.sort_index()
         df["close"] = df["close"].astype(float)
         return df[~df.duplicated()]
-    
+
+class FundingRate(Crawler):
+    def __init__(self, symbol = "BTCUSDT", start_date="2017-01-01", end_date="2024-01-01"):
+        self.start_date = start_date
+        self.end_date = end_date
+        self.symbol = symbol
+        
+    def Get(self) -> pd.DataFrame:
+        binance = ccxt.binance()
+        binance.options = {
+            'defaultType': 'future',
+            'adjustForTimeDifference': True
+        }
+
+        start_time = int(datetime.strptime(self.start_date, "%Y-%m-%d").timestamp() * 1000)
+        end_time = int(datetime.strptime(self.end_date, "%Y-%m-%d").timestamp() * 1000)
+        tmp_time = start_time
+
+        record_df = []
+        while tmp_time < end_time:
+            df = binance.fetch_funding_rate_history(symbol=self.symbol, since=tmp_time, params={"until": end_time})
+            df = [ data["info"] for data in df] 
+            df = pd.DataFrame(df)
+            record_df.append(df)
+            tmp_time = int(df["fundingTime"].max())
+
+        df = pd.concat(record_df).set_index("fundingTime")
+        df.index = pd.to_datetime(df.index, unit="ms")
+        df.sort_index()
+
+        df["fundingRate"] = df["fundingRate"].astype(float)
+
+        df.drop(columns=["markPrice"], inplace=True)
+
+        return df
     
     
 
 def renew_baseline_data():
-    df = BinaceData("BTCUSDT", start_date="2020-01-01", end_date="2024-05-05")
-    df.Get().to_csv("/Users/user/Desktop/stock/factor-model/data/base-BTCUSDT.csv")
-    
+    symbol = "BTCUSDT"
+    start_date = "2020-01-01"
+    end_date = "2024-01-01"
+    base_path = "./data"
+
+    df = BinaceData(symbol=symbol, start_date=start_date, end_date=end_date)
+    df.Get()
+    df.Get().to_csv(f"{base_path}/base-{symbol}.csv")
+
+    funding_rate = FundingRate(symbol=symbol, start_date=start_date, end_date=end_date)
+    funding_rate_data = funding_rate.Get()
+    funding_rate_data.to_csv(f"{base_path}/funding-rate-{symbol}.csv")
+
 if __name__ == "__main__":
     renew_baseline_data()
