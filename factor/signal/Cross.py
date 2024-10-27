@@ -16,4 +16,4 @@ class Cross(Factor):
         return float((price[self.n1:].mean() - price[self.n2:].mean()) > 0)
     
     def __str__(self) -> str:
-        return f"Cross {self.n1} {self.n2}"
+        return f"{self.__class__.__name__}_{self.n1}_{self.n2}"

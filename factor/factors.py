@@ -1,5 +1,7 @@
 import pandas as pd
 from abc import ABC
+import os, shutil
+
 
 
 class Factor(ABC):
@@ -7,9 +9,38 @@ class Factor(ABC):
     def Gen(self, cls, x:pd.Series) -> float: ...
     def __str__(self):
         return "not defined ..."
-
-
-
+    
+    @property
+    def result_path(self):
+        module_dir = os.path.dirname(__file__)
+        return os.path.join(os.path.join(module_dir, "result"), str(self))
+    
+    @property
+    def signal_output_path(self):
+        return os.path.join(self.result_path, "signal_output.csv")
+    
+    @property
+    def output_exist(self):
+        return os.path.exists(self.signal_output_path)
+    
+    @property
+    def exist(self):
+        return os.path.exists(self.result_path)
+    
+    def delete_exist_result(self) -> None:
+        shutil.rmtree(self.result_path)
+    
+    def save_signal_output(self, output:pd.Series):
+        output.to_csv(self.signal_output_path)
+    
+    def save_plot(self, x, y):
+        pass
+        
+    def load_signal_output(self):
+        return pd.read_csv(self.signal_output_path, index_col=0, parse_dates=True)
+    
+    def make_result_dir(self):
+        os.makedirs(self.result_path)
 
 
 '''

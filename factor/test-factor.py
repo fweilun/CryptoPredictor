@@ -6,7 +6,7 @@ from factor.factors import Factor
 from factor.signal.Cross import Cross
 import matplotlib.pyplot as plt
 import os, shutil
-from data.maker import maker
+from data.loader import Loader
 
 
 # def maker(X, delay=100, hours:int=24):
@@ -43,13 +43,18 @@ from data.maker import maker
     
 #     return train, test, pd.to_datetime(X['timestamp'])[:len(X) - delay]
 
-TARGET = "BTC"
+
+
+
+TARGET = "BTCUSDT"
 DELAY = 1000
 HOURS = 24
 SPLIT_RATE = 0.8
 
 
-if __name__ == "__main__":
+
+
+def main():
     signal_name = input("Input signal name: ")
     base_factor:Factor = None
     module = importlib.import_module(f'factor.signal.{signal_name}')
@@ -57,12 +62,10 @@ if __name__ == "__main__":
     f = open(f"factor/cfg/{signal_name}.json", 'r')
     jfile = json.load(f)
     
-    data_path = "data/storage/BTCUSDT.csv"
-    df = pd.read_csv(data_path)
-    train, test = maker(target=TARGET, delay=DELAY, hours=HOURS)
+    train, test, index = Loader.make(target=TARGET, delay=DELAY, hours=HOURS)
     
-    print(f"start time: {df['timestamp'].iloc[0]}")
-    print(f"end time: {df['timestamp'].iloc[-1]}")
+    print(f"start time: {index[0]}")
+    print(f"end time: {index[-1]}")
     print(f"number of cases: {len(train)}")
     print(f"predict interval: {HOURS}hrs")
     
@@ -72,18 +75,23 @@ if __name__ == "__main__":
         arg = config["argument"]
         base_factor = BaseClass(**arg)
         
-        res = []
-        for (x, y) in zip(train, test):
-            res.append(base_factor.Gen(x))
+        signal_output = pd.Series([base_factor.Gen(row) for row in train], index=index,name=str(base_factor))
 
-        print(f"{str(base_factor):<20}: {np.corrcoef(res, test)[0][1]:0.3f}")
+        print(f"{str(base_factor):<20}: {np.corrcoef(signal_output, test)[0][1]:0.3f}")
         
-        directory_path = f"factor/result/{signal_name}/{str(base_factor).replace(' ','_')}/"
-        if os.path.exists(directory_path):
-            shutil.rmtree(directory_path)
-        os.makedirs(directory_path)
+        if (base_factor.exist):
+            base_factor.delete_exist_result()
+        
+        base_factor.make_result_dir()
         
         plt.figure(figsize=(16,5))
-        plt.plot(res)
-        save_path = directory_path+"value.png"
-        plt.savefig(save_path)
+        plt.plot(index, signal_output)
+        plt.savefig(os.path.join(base_factor.result_path, "value.png"))
+        
+        base_factor.save_signal_output(signal_output)
+    
+
+
+
+if __name__ == "__main__":
+    main()
