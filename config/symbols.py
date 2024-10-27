@@ -12,9 +12,13 @@ class Symbols(Enum):
   MATIC = "MATIC" # Polygon
   LTC = "LTC" # 萊特幣
   AVAX = "AVAX" # Avalanche 
+  SHIB = "SHIB" # Shiba Inu
   LINK = "LINK" # Chainlink
   ATOM = "ATOM" # Cosmos
+  FTM = "FTM" # Fantom
+  SAND = "SAND" # Sandbox
   AXS = "AXS" # Axie Infinity
+  UNI = "UNI" # Uniswap
   NEAR = "NEAR" # NEAR Protocol
   ALGO = "ALGO" # Algorand
   AAVE = "AAVE" # Aave

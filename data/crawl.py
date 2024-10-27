@@ -146,15 +146,27 @@ def renew_data():
     start_date = "2020-01-01"
     end_date = "2024-01-01"
     base_path = "./data/storage"
+    base = "USDT"
 
-    for symbols in Symbols:
-        print(symbols.value)
-        base = "USDT"
-        pair = symbols.value + base
+    # Base Data
+    print(f'Base Data:')
+    for symbol in Symbols:
+        pair = symbol.value + base
+        print(f'Pair: {symbol.value}/{base}')
 
         binance_data = BinaceData(symbol=pair, start_date=start_date, end_date=end_date)
         base_df = binance_data.Get()
         base_df.to_csv(f"{base_path}/base/{pair}.csv")
+
+    # Funding Rate Data (BTC, ETH)
+    symbols = []
+    symbols.append(Symbols.BTC)
+    symbols.append(Symbols.ETH)
+
+    print(f'Funding Rate Data:')
+    for symbol in symbols:
+        pair = symbol.value + base
+        print(f'Pair: {symbol.value}/{base}')
 
         funding_rate = FundingRate(symbol=pair, start_date=start_date, end_date=end_date)
         funding_rate_df = funding_rate.Get()
