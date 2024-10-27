@@ -17,4 +17,4 @@ class weilun01(Factor):
         return (sum(price.iloc[-self.n:] < price.iloc[-1]) - self.mid) / self.mid
     
     def __str__(self) -> str:
-        return f"price rank {self.n}"
+        return f"{self.__class__.__name__}_{self.n}"

@@ -1,0 +1,15 @@
+{
+    "description": "last returns > 0 - last returns < 0",
+    "signal_list": [
+        {"signal": "weilun04","argument": {"n": 2}},
+        {"signal": "weilun04","argument": {"n": 3}},
+        {"signal": "weilun04","argument": {"n": 5}},
+        {"signal": "weilun04","argument": {"n": 10}},
+        {"signal": "weilun04","argument": {"n": 20}},
+        {"signal": "weilun04","argument": {"n": 50}},
+        {"signal": "weilun04","argument": {"n": 100}},
+        {"signal": "weilun04","argument": {"n": 200}},
+        {"signal": "weilun04","argument": {"n": 300}},
+        {"signal": "weilun04","argument": {"n": 400}}
+    ]
+}

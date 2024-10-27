@@ -8,8 +8,6 @@
         {"signal": "Slope","argument": {"n": 50}},
         {"signal": "Slope","argument": {"n": 100}},
         {"signal": "Slope","argument": {"n": 200}},
-        {"signal": "Slope","argument": {"n": 300}},
-        {"signal": "Slope","argument": {"n": 400}},
-        {"signal": "Slope","argument": {"n": 900}}
+        {"signal": "Slope","argument": {"n": 300}}
     ]
 }

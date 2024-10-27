@@ -19,4 +19,4 @@ class Slope(Factor):
         return slope
     
     def __str__(self) -> str:
-        return f"Slope {self.n}"
+        return f"{self.__class__.__name__}_{self.n}"

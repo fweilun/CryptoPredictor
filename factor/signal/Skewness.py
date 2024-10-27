@@ -17,4 +17,4 @@ class Skewness(Factor):
         return returns[-self.n:].skew()
     
     def __str__(self) -> str:
-        return f"Skewness {self.n}"
+        return f"{self.__class__.__name__}_{self.n}"
