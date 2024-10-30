@@ -13,7 +13,7 @@ class Factor(ABC):
     @property
     def result_path(self):
         module_dir = os.path.dirname(__file__)
-        return os.path.join(os.path.join(module_dir, "result"), str(self))
+        return os.path.join(os.path.join(os.path.join(module_dir, "result"), self.__class__.__name__),str(self))
     
     @property
     def signal_output_path(self):
