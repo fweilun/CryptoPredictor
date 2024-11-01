@@ -37,7 +37,17 @@ class Loader:
         target_path = os.path.join(BASE_STORAGE_DIR, f"{target}.csv")
         
         # init dataframe
-        X = pd.read_csv(target_path, usecols=["timestamp","close","volume"]).set_index("timestamp")
+        X = pd.read_csv(target_path, usecols=[
+            "timestamp",
+            "close",
+            "volume",
+            "taker_buy_base_asset_volume",
+            "taker_buy_quote_asset_volume", 
+            "open",
+            "high",
+            "low"
+            ]).set_index("timestamp")
+        
         X.index = pd.to_datetime(X.index)
         
         for file in os.listdir(BASE_STORAGE_DIR):
