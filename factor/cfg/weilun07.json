@@ -1,0 +1,11 @@
+{
+    "description": "Imbalance(Ask Size, Bid Size)",
+    "signal_list": [
+        {"signal": "weilun07","argument": {"n": 2}},
+        {"signal": "weilun07","argument": {"n": 5}},
+        {"signal": "weilun07","argument": {"n": 10}},
+        {"signal": "weilun07","argument": {"n": 20}},
+        {"signal": "weilun07","argument": {"n": 40}},
+        {"signal": "weilun07","argument": {"n": 100}}
+    ]
+}
