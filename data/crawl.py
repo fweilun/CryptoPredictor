@@ -166,6 +166,28 @@ class LongShortRatio(Crawler):
 
         return df
 
+class OpenInterest(Crawler):
+    def __init__(self, symbol="BTC/USDT:USDT", interval="4h", limit=500):
+        self.symbol = symbol
+        self.interval = interval
+        self.limit = limit
+    
+    def Get(self) -> pd.DataFrame:
+        binance = ccxt.binance()
+
+        df = binance.fetch_open_interest_history(symbol=self.symbol, timeframe=self.interval, limit=self.limit)
+        df = [ data["info"] for data in df]
+        df = pd.DataFrame(df)
+
+        df.set_index("timestamp", inplace=True)
+        df.index = pd.to_datetime(df.index, unit="ms")
+        df.sort_index()
+
+        df["sumOpenInterest"] = df["sumOpenInterest"].astype(float)
+        df["sumOpenInterestValue"] = df["sumOpenInterestValue"].astype(float)
+
+        return df
+
 def renew_data():
     start_date = "2020-01-01"
     end_date = "2024-01-01"
@@ -199,10 +221,6 @@ def renew_data():
     # Long Short Ratio Data (BTC, ETH) 30 days only
     print(f'Long Short Ratio Data:')
     for symbol in symbols:
-        # old data
-        df = pd.read_csv(f"{base_path}/long-short-ratio/{symbol.value + base}.csv")
-        df.set_index('timestamp', inplace=True)
-
         pair = f'{symbol.value}/{base}:{base}'
         print(f'Pair: {pair}')
 
@@ -211,12 +229,44 @@ def renew_data():
 
         start_date = long_short_ratio_df.index.min().strftime('%Y-%m-%d %H:%M:%S')
 
-        repeated_df = df[df.index >= start_date]
-        df = df.drop(repeated_df.index, axis=0)
+        # old data
+        try:
+            df = pd.read_csv(f"{base_path}/long-short-ratio/{symbol.value + base}.csv")
+            df.set_index('timestamp', inplace=True)
+
+            repeated_df = df[df.index >= start_date]
+            df = df.drop(repeated_df.index, axis=0)
+
+        except:
+            df = pd.DataFrame()
 
         df = pd.concat([df, long_short_ratio_df])
-
         df.to_csv(f"{base_path}/long-short-ratio/{symbol.value + base}.csv")
+
+    # Open Interest Data (BTC, ETH) 30 days only
+    print(f'Open Interest Data:')
+    for symbol in symbols:
+        pair = f'{symbol.value}/{base}:{base}'
+        print(f'Pair: {pair}')
+
+        open_interest = OpenInterest(symbol=pair)
+        open_interest_df = open_interest.Get()
+
+        start_date = open_interest_df.index.min().strftime('%Y-%m-%d %H:%M:%S')
+
+        # old data
+        try:
+            df = pd.read_csv(f"{base_path}/open-interest/{symbol.value + base}.csv")
+            df.set_index('timestamp', inplace=True)
+
+            repeated_df = df[df.index >= start_date]
+            df = df.drop(repeated_df.index, axis=0)
+
+        except:
+            df = pd.DataFrame()
+
+        df = pd.concat([df, open_interest_df])
+        df.to_csv(f"{base_path}/open-interest/{symbol.value + base}.csv")
 
 if __name__ == "__main__":
     renew_data()
