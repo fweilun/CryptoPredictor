@@ -142,6 +142,30 @@ class FundingRate(Crawler):
 
         return df
 
+# only 30 days data
+class LongShortRatio(Crawler):
+    def __init__(self, symbol="BTC/USDT:USDT", interval="4h", limit=500):
+        self.symbol = symbol
+        self.interval = interval
+        self.limit = limit
+
+    def Get(self) -> pd.DataFrame:
+        binance = ccxt.binance()
+
+        df = binance.fetch_long_short_ratio_history(symbol=self.symbol, timeframe=self.interval, limit=self.limit)
+        df = [ data["info"] for data in df] 
+        df = pd.DataFrame(df)
+
+        df.set_index("timestamp", inplace=True)
+        df.index = pd.to_datetime(df.index, unit="ms")
+        df.sort_index()
+
+        df["longAccount"] = df["longAccount"].astype(float)
+        df["shortAccount"] = df["shortAccount"].astype(float)
+        df["longShortRatio"] = df["longShortRatio"].astype(float)
+
+        return df
+
 def renew_data():
     start_date = "2020-01-01"
     end_date = "2024-01-01"
@@ -171,6 +195,28 @@ def renew_data():
         funding_rate = FundingRate(symbol=pair, start_date=start_date, end_date=end_date)
         funding_rate_df = funding_rate.Get()
         funding_rate_df.to_csv(f"{base_path}/funding-rate/{pair}.csv")
+
+    # Long Short Ratio Data (BTC, ETH) 30 days only
+    print(f'Long Short Ratio Data:')
+    for symbol in symbols:
+        # old data
+        df = pd.read_csv(f"{base_path}/long-short-ratio/{symbol.value + base}.csv")
+        df.set_index('timestamp', inplace=True)
+
+        pair = f'{symbol.value}/{base}:{base}'
+        print(f'Pair: {pair}')
+
+        long_short_ratio = LongShortRatio(symbol=pair)
+        long_short_ratio_df = long_short_ratio.Get()
+
+        start_date = long_short_ratio_df.index.min().strftime('%Y-%m-%d %H:%M:%S')
+
+        repeated_df = df[df.index >= start_date]
+        df = df.drop(repeated_df.index, axis=0)
+
+        df = pd.concat([df, long_short_ratio_df])
+
+        df.to_csv(f"{base_path}/long-short-ratio/{symbol.value + base}.csv")
 
 if __name__ == "__main__":
     renew_data()
