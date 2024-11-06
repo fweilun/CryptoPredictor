@@ -1,19 +1,36 @@
 import pandas as pd
 from abc import ABC
-import os, shutil
+import os, shutil, json
 
 
 
 class Factor(ABC):
-    def __init__(self): ...
+    def __init__(self):
+        self.target__ = None
+        
     def Gen(self, cls, x:pd.Series) -> float: ...
     def __str__(self):
         return "not defined ..."
+    def load_target(self, target):
+        self.target__ = target
+        
+    @classmethod
+    def load_signal_config(cls):
+        module_dir = os.path.dirname(__file__)
+        path = os.path.join(module_dir, "cfg", cls.__name__ + ".json")
+        f = open(path)
+        return json.load(f)
+    
+    @classmethod
+    def load_signals(cls):
+        signal_config = cls.load_signal_config()
+        return [cls(**config["argument"]) for config in signal_config["signal_list"]]
     
     @property
     def result_path(self):
+        assert(self.target__ != None), "target is not defined."
         module_dir = os.path.dirname(__file__)
-        return os.path.join(os.path.join(os.path.join(module_dir, "result"), self.__class__.__name__),str(self))
+        return os.path.join(module_dir, "result", self.target__, self.__class__.__name__,str(self))
     
     @property
     def signal_output_path(self):
@@ -22,6 +39,11 @@ class Factor(ABC):
     @property
     def output_exist(self):
         return os.path.exists(self.signal_output_path)
+    
+    @property
+    def signal_config_path(self):
+        module_dir = os.path.dirname(__file__)
+        return os.path.join(module_dir, "cfg", self.__class__.__name__, str(self))
     
     @property
     def exist(self):
@@ -41,6 +63,11 @@ class Factor(ABC):
     
     def make_result_dir(self):
         os.makedirs(self.result_path)
+    
+    def __repr__(self):
+        return self.__str__()
+        
+    
 
 
 '''
