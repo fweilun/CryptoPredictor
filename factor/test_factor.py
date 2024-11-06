@@ -1,55 +1,12 @@
-from abc import ABC
-import numpy as np
-import pandas as pd
-import importlib, json
 from factor.factors import Factor
 from factor.signal.Cross import Cross
-import matplotlib.pyplot as plt
-import os, shutil, tqdm
 from data.loader import Loader
+from config.load import load_config
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import importlib, json, tqdm
 
-
-# def maker(X, delay=100, hours:int=24):
-#     train = []
-#     test = []
-#     X["return"] = X["close"].pct_change(hours//4).shift(-hours//4)
-#     X = X.dropna()
-#     y = X["return"]
-#     Colums = ["close", "volume"]
-#     for i in range(len(X) - delay):
-#         start, end = i, i + delay
-#         predict = i + delay
-#         train.append(X[Colums][start:end])
-#         test.append(y[predict])
-    
-#     return train, test
-
-# def maker_group(X, delay=100, hours:int=24):
-#     train = []
-#     test = []
-#     X["return"] = X["close"].pct_change(hours//4).shift(-hours//4)
-#     for file in os.listdir("data"):
-#         path = os.path.join(data_file_path, file)
-#         X[file + "_close"] = pd.read_csv(path)["close"]
-    
-#     X = X.dropna()
-#     y = X["return"]
-    
-#     for i in range(len(X) - delay):
-#         start, end = i, i + delay
-#         predict = i + delay
-#         train.append(X[start:end])
-#         test.append(y[predict])
-    
-#     return train, test, pd.to_datetime(X['timestamp'])[:len(X) - delay]
-
-
-
-
-TARGET = "BTCUSDT"
-DELAY = 1000
-HOURS = 24
-SPLIT_RATE = 0.8
 
 
 class FactorTest:
@@ -60,7 +17,7 @@ class FactorTest:
     
     @classmethod
     def correlation_stable(cls, signal_output, test):
-        n = 5
+        n = 10
         x_ = np.array_split(signal_output, n)
         y_ = np.array_split(test, n)
         result = []
@@ -118,48 +75,68 @@ class FactorTest:
    
    
 def make_signal_report(signal_results, test):
-    scoring = pd.DataFrame(index=signal_results.keys())
-    keys = signal_results.keys()
-    scoring["correlation"] = [FactorTest.correlation(signal_results[index], test) for index in keys]
-    scoring["correlation_stable"] = [FactorTest.correlation_stable(signal_results[index], test)  for index in keys]
+    scoring = pd.DataFrame(index=signal_results.columns)
+    keys = signal_results.columns
+    # print(signal_results[keys[0]], test)
+    
+    scoring["correlation"] = [FactorTest.correlation(signal_results[k], test) for k in keys]
+    scoring["correlation_stable"] = [FactorTest.correlation_stable(signal_results[k], test)  for k in keys]
     # scoring["accuracy"] = [FactorTest.accuracy(signal_results[index], test)  for index in keys]
     # scoring["zeros"] = [FactorTest.zero_percent(signal_results[index])  for index in keys]
     return scoring
-   
-   
-   
+
+
+class FactorRunner:
+    @classmethod
+    def run1factor(cls, factor:Factor, delay:int=1000, target:str="BTCUSDT", save=True):
+        X, y = Loader.make(target=target, delay=delay, hours=72)
+        df = pd.Series([factor.Gen(row) for row in X], index=y.index, name=str(factor))
+        if (factor.exist):
+            factor.delete_exist_result()
+            
+        factor.make_result_dir()
+        if save:
+            factor.save_signal_output(df)
+        return df
 
 
 def main():
-    signal_name = input("Input signal name: ")
-    base_factor:Factor = None
-    module = importlib.import_module(f'factor.signal.{signal_name}')
-    BaseClass = getattr(module, signal_name)
-    f = open(f"factor/cfg/{signal_name}.json", 'r')
-    jfile = json.load(f)
+    config = load_config()
+    TARGET = config.get("TARGET")
+    DELAY = config.get("DELAY")
+    HOURS = config.get("HOURS")
     
-    train, test, index = Loader.make(target=TARGET, delay=DELAY, hours=HOURS)
+    config = load_config()
+    start_date = config.get("test_factor").get("start_date")
+    end_date = config.get("test_factor").get("end_date")
+    
+    signal_name = input("Input signal name: ")
+    module = importlib.import_module(f'factor.signal.{signal_name}')
+    BaseClass:Factor = getattr(module, signal_name)
+    
+    train, test = Loader.make(target=TARGET, delay=DELAY, hours=HOURS)
+    index = test.index
     
     print(f"start time: {index[0]}")
     print(f"end time: {index[-1]}")
     print(f"number of cases: {len(train)}")
     print(f"predict interval: {HOURS}hrs")
     
-    assert("signal_list" in jfile), "wrong config.."
     signal_results = pd.DataFrame()
-    for config in tqdm.tqdm(jfile["signal_list"], "configs"):
-        assert("argument" in config), "wrong config.."
-        arg = config["argument"]
-        base_factor = BaseClass(**arg)
-        
-        signal_output = pd.Series([base_factor.Gen(row) for row in train], index=index,name=str(base_factor))
-        if (base_factor.exist):
-            base_factor.delete_exist_result()
-            
-        base_factor.make_result_dir()
-        base_factor.save_signal_output(signal_output)
-        signal_results[base_factor.__str__()]  = signal_output
-    
+    for signal in tqdm.tqdm(BaseClass.load_signals(), "factors"):
+        signal.load_target(TARGET)
+        FactorRunner.run1factor(signal)
+        signal_output = pd.Series([signal.Gen(row) for row in train], index=index,name=str(signal))
+        signal_results[signal.__str__()]  = signal_output
+
+    # train by fixed interval, setting.yml
+    signal_results = signal_results.loc[start_date:end_date]
+    test = test.loc[start_date:end_date]
+    # print(signal_results)
+    # exit()
+    print(f"report generate on")
+    print("start date:", start_date)
+    print("end date:", end_date)
     scoring = make_signal_report(signal_results=signal_results, test=test)
     
     print("factor results:")
