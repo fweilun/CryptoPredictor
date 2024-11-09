@@ -11,3 +11,5 @@ ccxt
 matplotlib
 numpy
 importlib
+tqdm
+scikit-learn

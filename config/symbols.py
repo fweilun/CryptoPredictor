@@ -9,7 +9,7 @@ class Symbols(Enum):
   SOL = "SOL" # Solana
   DOGE = "DOGE" # 狗狗幣
   DOT = "DOT" # Polkadot
-  MATIC = "MATIC" # Polygon
+  # MATIC = "MATIC" # Polygon
   LTC = "LTC" # 萊特幣
   AVAX = "AVAX" # Avalanche 
   SHIB = "SHIB" # Shiba Inu

@@ -1,7 +1,6 @@
 from factor.factors import Factor
 import pandas as pd
 import numpy as np
-import talib
 
 class CrossRSI(Factor):
     need = ["close"]

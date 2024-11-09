@@ -2,6 +2,7 @@ import pandas as pd
 import os
 import yfinance as yf
 import requests
+import numpy as np
 
 MODULE_DIR = os.path.dirname(__file__)
 STORAGE_DIR = os.path.join(MODULE_DIR, "storage")
@@ -12,7 +13,7 @@ FUNDING_RATE_DIR = os.path.join(STORAGE_DIR, "funding_rate")
 
 class Loader:
     start_date = "2022-11-01"
-    end_date = "2024-10-01"    
+    end_date = "2024-11-04"    
     @classmethod
     def make(cls, target="BTCUSDT", delay=100, hours:int=24):
         '''
@@ -37,7 +38,17 @@ class Loader:
         target_path = os.path.join(BASE_STORAGE_DIR, f"{target}.csv")
         
         # init dataframe
-        X = pd.read_csv(target_path, usecols=["timestamp","close","volume"]).set_index("timestamp")
+        X = pd.read_csv(target_path, usecols=[
+            "timestamp",
+            "close",
+            "volume",
+            "taker_buy_base_asset_volume",
+            "taker_buy_quote_asset_volume", 
+            "open",
+            "high",
+            "low"
+            ]).set_index("timestamp")
+        
         X.index = pd.to_datetime(X.index)
         
         for file in os.listdir(BASE_STORAGE_DIR):
@@ -55,7 +66,7 @@ class Loader:
         train = [X[i:i + delay] for i in range(len(X) - delay)]
         test = [y[i + delay] for i in range(len(X) - delay)]
         
-        return train, test, index
+        return train, pd.Series(test, index=index)
     
     @classmethod
     def make_spy(cls, delay=100, hours:int=24):
@@ -85,8 +96,8 @@ class Loader:
         y = X["return"]
         
         index = y.index[delay:]
-        train = [X[i:i + delay] for i in range(len(X) - delay)]
-        test = [y[i + delay] for i in range(len(X) - delay)]
+        train = np.array([X[i:i + delay] for i in range(len(X) - delay)])
+        test = np.array([y[i + delay] for i in range(len(X) - delay)])
         
         return train, test, index
 
