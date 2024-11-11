@@ -77,7 +77,7 @@ class UnEmployRate(Crawler):
         unemploy_result
         return unemploy_result
     
-class BinaceData(Crawler):
+class SpotData(Crawler):
     def __init__(self,symbol="BTCUSDT",start_date="2005", end_date="2024", interval="4h"):
         self.start_date = start_date
         self.end_date = end_date
@@ -106,6 +106,34 @@ class BinaceData(Crawler):
         df = df.sort_index()
         df["close"] = df["close"].astype(float)
         return df[~df.duplicated()]
+
+class FutureData(Crawler):
+    def __init__(self, symbol="BTC/USDT:USDT", start_date="2017-01-01", end_date="2024-01-01", interval="4h"):
+        self.start_date = start_date
+        self.end_date = end_date
+        self.symbol = symbol
+        self.interval = interval
+
+    def Get(self) -> pd.DataFrame:
+        binance = ccxt.binance()
+
+        start_time = int(datetime.strptime(self.start_date, "%Y-%m-%d").timestamp() * 1000)
+        end_time = int(datetime.strptime(self.end_date, "%Y-%m-%d").timestamp() * 1000)
+        tmp_time = start_time
+
+        record_df = []
+        while tmp_time < end_time:
+            df = binance.fetch_ohlcv(symbol=self.symbol, timeframe=self.interval, since=tmp_time, params={"until": end_time})
+            df = pd.DataFrame(df, columns=["timestamp", "open", "high", "low", "close", "volume"])
+            record_df.append(df)
+            tmp_time = int(df["timestamp"].max())
+
+        df = pd.concat(record_df).set_index("timestamp")
+        df.index = pd.to_datetime(df.index.astype(float), unit="ms")
+        df = df.sort_index()
+        df["close"] = df["close"].astype(float)
+
+        return df
     
 class FundingRate(Crawler):
     def __init__(self, symbol = "BTCUSDT", start_date="2017-01-01", end_date="2024-01-01"):
@@ -133,7 +161,7 @@ class FundingRate(Crawler):
             tmp_time = int(df["fundingTime"].max())
 
         df = pd.concat(record_df).set_index("fundingTime")
-        df.index = pd.to_datetime(df.index, unit="ms")
+        df.index = pd.to_datetime(df.index.astype(float), unit="ms")
         df.sort_index()
 
         df["fundingRate"] = df["fundingRate"].astype(float)
@@ -157,7 +185,7 @@ class LongShortRatio(Crawler):
         df = pd.DataFrame(df)
 
         df.set_index("timestamp", inplace=True)
-        df.index = pd.to_datetime(df.index, unit="ms")
+        df.index = pd.to_datetime(df.index.astype(float), unit="ms")
         df.sort_index()
 
         df["longAccount"] = df["longAccount"].astype(float)
@@ -180,7 +208,7 @@ class OpenInterest(Crawler):
         df = pd.DataFrame(df)
 
         df.set_index("timestamp", inplace=True)
-        df.index = pd.to_datetime(df.index, unit="ms")
+        df.index = pd.to_datetime(df.index.astype(float), unit="ms")
         df.sort_index()
 
         df["sumOpenInterest"] = df["sumOpenInterest"].astype(float)
@@ -195,21 +223,21 @@ def renew_data():
     base = "USDT"
 
     # Base Data
-    print(f'Base Data:')
+    print(f'Spot Data:')
     for symbol in Symbols:
         pair = symbol.value + base
         print(f'Pair: {symbol.value}/{base}')
 
-        binance_data = BinaceData(symbol=pair, start_date=start_date, end_date=end_date)
+        binance_data = SpotData(symbol=pair, start_date=start_date, end_date=end_date)
         base_df = binance_data.Get()
-        base_df.to_csv(f"{base_path}/base/{pair}.csv")
+        base_df.to_csv(f"{base_path}/spot/{pair}.csv")
 
-    # Funding Rate Data (BTC, ETH)
     symbols = []
     symbols.append(Symbols.BTC)
     symbols.append(Symbols.ETH)
 
-    print(f'Funding Rate Data:')
+    # Funding Rate Data (BTC, ETH)
+    print(f'\nFunding Rate Data:')
     for symbol in symbols:
         pair = symbol.value + base
         print(f'Pair: {symbol.value}/{base}')
@@ -218,8 +246,18 @@ def renew_data():
         funding_rate_df = funding_rate.Get()
         funding_rate_df.to_csv(f"{base_path}/funding-rate/{pair}.csv")
 
+    # Future Data (BTC, ETH)
+    print(f'\nFuture Data:')
+    for symbol in symbols:
+        pair = f'{symbol.value}/{base}:{base}'
+        print(f'Pair: {pair}')
+
+        future_data = FutureData(symbol=pair, start_date=start_date, end_date=end_date)
+        future_df = future_data.Get()
+        future_df.to_csv(f"{base_path}/future/{symbol.value + base}.csv")
+
     # Long Short Ratio Data (BTC, ETH) 30 days only
-    print(f'Long Short Ratio Data:')
+    print(f'\nLong Short Ratio Data:')
     for symbol in symbols:
         pair = f'{symbol.value}/{base}:{base}'
         print(f'Pair: {pair}')
@@ -244,7 +282,7 @@ def renew_data():
         df.to_csv(f"{base_path}/long-short-ratio/{symbol.value + base}.csv")
 
     # Open Interest Data (BTC, ETH) 30 days only
-    print(f'Open Interest Data:')
+    print(f'\nOpen Interest Data:')
     for symbol in symbols:
         pair = f'{symbol.value}/{base}:{base}'
         print(f'Pair: {pair}')

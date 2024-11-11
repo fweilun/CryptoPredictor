@@ -6,7 +6,7 @@ import numpy as np
 
 MODULE_DIR = os.path.dirname(__file__)
 STORAGE_DIR = os.path.join(MODULE_DIR, "storage")
-BASE_STORAGE_DIR = os.path.join(STORAGE_DIR, "base")
+SPOT_STORAGE_DIR = os.path.join(STORAGE_DIR, "spot")
 FUNDING_RATE_DIR = os.path.join(STORAGE_DIR, "funding_rate")
 
 
@@ -35,7 +35,7 @@ class Loader:
         - test (list): Target values (future returns) for each input set.
         '''
         
-        target_path = os.path.join(BASE_STORAGE_DIR, f"{target}.csv")
+        target_path = os.path.join(SPOT_STORAGE_DIR, f"{target}.csv")
         
         # init dataframe
         X = pd.read_csv(target_path, usecols=[
@@ -51,8 +51,8 @@ class Loader:
         
         X.index = pd.to_datetime(X.index)
         
-        for file in os.listdir(BASE_STORAGE_DIR):
-            path = os.path.join(BASE_STORAGE_DIR, file)
+        for file in os.listdir(SPOT_STORAGE_DIR):
+            path = os.path.join(SPOT_STORAGE_DIR, file)
             file_df = pd.read_csv(path, usecols=["timestamp","close","volume"]).set_index("timestamp")
             file_df.index = pd.to_datetime(file_df.index)
             file_df.columns = [f"{file[:-4]}_{col}" for col in file_df.columns]
@@ -103,7 +103,7 @@ class Loader:
 
     @classmethod
     def load_price(cls, symbol:str="BTCUSDT"):
-        file_path = os.path.join(BASE_STORAGE_DIR, f"{symbol}.csv")
+        file_path = os.path.join(SPOT_STORAGE_DIR, f"{symbol}.csv")
         coin_data = pd.read_csv(file_path)
         coin_data = coin_data.set_index("timestamp")
         coin_data.index = pd.to_datetime(coin_data.index)
