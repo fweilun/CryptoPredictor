@@ -13,7 +13,18 @@ ex.
 2. add signal file to signal folder.
 3. add config file to cfg folder.
 4. cd to base directory (CryptoPredictor).
-5. run python -m factor.test-factor
+5. run python -m backtest.test_factor $(signal_name)
+
+ex. python -m backtest.test_factor weilun01
+
+# Show all signal results
+
+python -m backtest.test_factor all
+
+# Show factor model backtest result
+
+python -m backtest.factor_model
+
 
 
 

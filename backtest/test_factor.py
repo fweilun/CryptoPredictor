@@ -5,7 +5,7 @@ from config.load import load_config
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import importlib, json, tqdm
+import importlib, json, tqdm, factor, argparse
 
 
 
@@ -87,20 +87,38 @@ def make_signal_report(signal_results, test):
 
 
 class FactorRunner:
-    @classmethod
-    def run1factor(cls, factor:Factor, delay:int=1000, target:str="BTCUSDT", save=True):
-        X, y = Loader.make(target=target, delay=delay, hours=72)
-        df = pd.Series([factor.Gen(row) for row in X], index=y.index, name=str(factor))
+    def __init__(self, X, y, target=None):
+        self.X = X
+        self.y = y
+        self.target = target
+        self.__save = True
+    
+    def run1factor(self,factor:Factor):
+        df = pd.Series([factor.Gen(row) for row in self.X], index=self.y.index, name=str(factor))
         if (factor.exist):
             factor.delete_exist_result()
-            
         factor.make_result_dir()
-        if save:
+        if self.__save:
             factor.save_signal_output(df)
         return df
+    
+    def run1class(self, factor_class:Factor, rerun=True):
+        signal_results = pd.DataFrame()
+        for signal in tqdm.tqdm(factor_class.load_signals(), "factors"):
+            signal.load_target(self.target)
+            
+            signal_output = None
+            if rerun:
+                signal_output = pd.Series([factor.Gen(row) for row in self.X], index=self.y.index, name=str(factor))
+            else:
+                # check function
+                signal_output = signal.load_signal_output()
+                
+            signal_results[signal.__str__()]  = signal_output
+        
+        return signal_results
 
-
-def main():
+def test1factor_by_class(factor:Factor):
     config = load_config()
     TARGET = config.get("TARGET")
     DELAY = config.get("DELAY")
@@ -110,11 +128,9 @@ def main():
     start_date = config.get("test_factor").get("start_date")
     end_date = config.get("test_factor").get("end_date")
     
-    signal_name = input("Input signal name: ")
-    module = importlib.import_module(f'factor.signal.{signal_name}')
-    BaseClass:Factor = getattr(module, signal_name)
     
     train, test = Loader.make(target=TARGET, delay=DELAY, hours=HOURS)
+    factor_runner = FactorRunner(train, test, target=TARGET)
     index = test.index
     
     print(f"start time: {index[0]}")
@@ -122,17 +138,12 @@ def main():
     print(f"number of cases: {len(train)}")
     print(f"predict interval: {HOURS}hrs")
     
-    signal_results = pd.DataFrame()
-    for signal in tqdm.tqdm(BaseClass.load_signals(), "factors"):
-        signal.load_target(TARGET)
-        # FactorRunner.run1factor(signal)
-        signal_output = pd.Series([signal.Gen(row) for row in train], index=index,name=str(signal))
-        signal_results[signal.__str__()]  = signal_output
+    signal_results = factor_runner.run1class(factor, rerun=True)
 
     # train by fixed interval, setting.yml
     signal_results = signal_results.loc[start_date:end_date]
     test = test.loc[start_date:end_date]
-    # print(signal_results)
+    
     print(f"report generate on")
     print("start date:", start_date)
     print("end date:", end_date)
@@ -142,7 +153,53 @@ def main():
     print(scoring)
     print("correlation matrix:")
     print(signal_results.corr())
+
+
+def test1factor_by_name(factor_name):
+    module = importlib.import_module(f'factor.signal.{factor_name}')
+    BaseClass:Factor = getattr(module, factor_name)
+    test1factor_by_class(BaseClass)
     
+    
+def show_all():
+    config = load_config()
+    TARGET = config.get("TARGET")
+    DELAY = config.get("DELAY")
+    HOURS = config.get("HOURS")
+    
+    factor_cls_list = [
+        factor.weilun01,
+        factor.weilun02,
+        factor.weilun03,
+        factor.weilun04,
+        factor.weilun05,
+        factor.weilun06,
+        factor.weilun07,
+        factor.Cross,
+        factor.CrossRSI,
+        factor.Slope,
+        factor.Skewness,
+    ]
+    
+    train, test = Loader.make(target=TARGET, delay=DELAY, hours=HOURS)
+    factor_runner = FactorRunner(X=train, y=test, target=TARGET)
+    scoring_df = pd.DataFrame()
+    for factor_cls in factor_cls_list:
+        signal_results = factor_runner.run1class(factor_cls, rerun=False)
+        scoring = make_signal_report(signal_results=signal_results, test=test)
+        scoring_df = pd.concat([scoring_df, scoring])
+        
+    pd.set_option('display.max_rows', 100)
+    print(scoring_df.sort_values(by="correlation", ascending=False))
+
+
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Run factor tests with given parameters.")
+    parser.add_argument("factor_name", type=str, help="Name of the factor to test")
+    args = parser.parse_args()
+    if args.factor_name == "all":
+        show_all()
+    else:
+        test1factor_by_name(args.factor_name)
+    
