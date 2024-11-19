@@ -109,7 +109,7 @@ class FactorRunner:
             
             signal_output = None
             if rerun:
-                signal_output = pd.Series([factor.Gen(row) for row in self.X], index=self.y.index, name=str(factor))
+                signal_output = pd.Series([signal.Gen(row) for row in self.X], index=self.y.index, name=str(factor))
             else:
                 # check function
                 signal_output = signal.load_signal_output()

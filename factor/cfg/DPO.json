@@ -1,0 +1,17 @@
+{
+    "description": "decentralized price oscillator",
+    "signal_list": [
+
+        {"signal": "DPO","argument": {"n": 20,"displacement":5}},
+        {"signal": "DPO","argument": {"n": 20,"displacement":10}},
+        {"signal": "DPO","argument": {"n": 30,"displacement":5}},
+        {"signal": "DPO","argument": {"n": 30,"displacement":10}},
+        {"signal": "DPO","argument": {"n": 50,"displacement":10}},
+        {"signal": "DPO","argument": {"n": 50,"displacement":20}},
+        {"signal": "DPO","argument": {"n": 50,"displacement":30}},
+        {"signal": "DPO","argument": {"n": 100,"displacement":20}},
+        {"signal": "DPO","argument": {"n": 100,"displacement":30}},
+        {"signal": "DPO","argument": {"n": 100,"displacement":50}}
+
+    ]
+}
