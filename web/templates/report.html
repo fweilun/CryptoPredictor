@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signal Report</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            text-align: center;
+            width: 90%;
+            max-width: 1200px;
+            min-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        h1 {
+            color: #333;
+        }
+        .data {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+        .data th, .data td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        .data th {
+            background-color: #f2f2f2;
+        }
+        .plot-container {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+        .plot-img {
+            max-width: 45%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Signal Report</h1>
+        <div>
+            {{ report_table | safe }}
+        </div>
+        <div>
+            {{ corr_table | safe }}
+        </div>
+        <div>
+            {% for plot in plots %}
+                {{ plot | safe }}
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>
