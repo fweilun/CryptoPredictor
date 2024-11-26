@@ -3,7 +3,6 @@ from factor.signal.Cross import Cross
 from data.loader import Loader
 from config.load import load_config
 import matplotlib.pyplot as plt
-import seaborn as sns
 import numpy as np
 import pandas as pd
 import importlib, tqdm, factor, argparse, os
