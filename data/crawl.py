@@ -79,6 +79,10 @@ class UnEmployRate(Crawler):
     
 class SpotData(Crawler):
     def __init__(self,symbol="BTCUSDT",start_date="2005", end_date="2024", interval="4h"):
+        pass
+        
+class BinaceData(Crawler):
+    def __init__(self,symbol="BTCUSDT",start_date="2005", end_date="2024", interval="10min"):
         self.start_date = start_date
         self.end_date = end_date
         self.symbol = symbol
@@ -157,13 +161,18 @@ class FundingRate(Crawler):
             df = binance.fetch_funding_rate_history(symbol=self.symbol, since=tmp_time, params={"until": end_time})
             df = [ data["info"] for data in df] 
             df = pd.DataFrame(df)
+            new_tmp_time = int(df["fundingTime"].max())
+            if tmp_time == new_tmp_time:
+                break
+            
             record_df.append(df)
-            tmp_time = int(df["fundingTime"].max())
+            tmp_time = new_tmp_time
 
         df = pd.concat(record_df).set_index("fundingTime")
         df.index = pd.to_datetime(df.index.astype(float), unit="ms")
-        df.sort_index()
-
+        df.index = df.index.round('S')
+        df = df.sort_index()
+        df = df.drop_duplicates(keep='first')
         df["fundingRate"] = df["fundingRate"].astype(float)
 
         df.drop(columns=["markPrice"], inplace=True)
@@ -218,19 +227,19 @@ class OpenInterest(Crawler):
 
 def renew_data():
     start_date = "2020-01-01"
-    end_date = "2024-01-01"
+    end_date = "2025-01-01"
     base_path = "./data/storage"
     base = "USDT"
 
     # Base Data
-    print(f'Spot Data:')
-    for symbol in Symbols:
-        pair = symbol.value + base
-        print(f'Pair: {symbol.value}/{base}')
+    # print(f'Spot Data:')
+    # for symbol in Symbols:
+    #     pair = symbol.value + base
+    #     print(f'Pair: {symbol.value}/{base}')
 
-        binance_data = SpotData(symbol=pair, start_date=start_date, end_date=end_date)
-        base_df = binance_data.Get()
-        base_df.to_csv(f"{base_path}/spot/{pair}.csv")
+    #     binance_data = SpotData(symbol=pair, start_date=start_date, end_date=end_date)
+    #     base_df = binance_data.Get()
+    #     base_df.to_csv(f"{base_path}/spot/{pair}.csv")
 
     symbols = []
     symbols.append(Symbols.BTC)
@@ -245,6 +254,7 @@ def renew_data():
         funding_rate = FundingRate(symbol=pair, start_date=start_date, end_date=end_date)
         funding_rate_df = funding_rate.Get()
         funding_rate_df.to_csv(f"{base_path}/funding-rate/{pair}.csv")
+    exit()
 
     # Future Data (BTC, ETH)
     print(f'\nFuture Data:')
