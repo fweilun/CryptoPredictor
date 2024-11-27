@@ -1,0 +1,9 @@
+{
+    "description": "price momentum factor",
+    "signal_list": [
+        {"signal": "Momentum", "argument": {"periods": [5]}},
+        {"signal": "Momentum", "argument": {"periods": [10]}},
+        {"signal": "Momentum", "argument": {"periods": [20]}},
+        {"signal": "Momentum", "argument": {"periods": [30]}}
+    ]
+}
