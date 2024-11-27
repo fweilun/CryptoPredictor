@@ -9,8 +9,12 @@ class Factor(ABC):
         self.target__ = None
         
     def Gen(self, cls, x:pd.Series) -> float: ...
+    
+    def GenAll(self, cls, x:pd.Series) -> pd.Series: ...
+    
     def __str__(self):
         return "not defined ..."
+    
     def load_target(self, target):
         self.target__ = target
         
@@ -73,7 +77,9 @@ class Factor(ABC):
         pass
         
     def load_signal_output(self):
-        return pd.read_csv(self.signal_output_path, index_col=0, parse_dates=True)
+        result = pd.read_csv(self.signal_output_path, index_col=0, parse_dates=True).iloc[:,0]
+        result.name = str(self)
+        return result
     
     def make_result_dir(self):
         os.makedirs(self.result_path)
