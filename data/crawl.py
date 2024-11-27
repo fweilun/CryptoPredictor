@@ -79,10 +79,6 @@ class UnEmployRate(Crawler):
     
 class SpotData(Crawler):
     def __init__(self,symbol="BTCUSDT",start_date="2005", end_date="2024", interval="4h"):
-        pass
-        
-class BinaceData(Crawler):
-    def __init__(self,symbol="BTCUSDT",start_date="2005", end_date="2024", interval="10min"):
         self.start_date = start_date
         self.end_date = end_date
         self.symbol = symbol
@@ -129,8 +125,12 @@ class FutureData(Crawler):
         while tmp_time < end_time:
             df = binance.fetch_ohlcv(symbol=self.symbol, timeframe=self.interval, since=tmp_time, params={"until": end_time})
             df = pd.DataFrame(df, columns=["timestamp", "open", "high", "low", "close", "volume"])
+            new_tmp_time = int(df["timestamp"].max())
+            if tmp_time == new_tmp_time:
+                break
+
             record_df.append(df)
-            tmp_time = int(df["timestamp"].max())
+            tmp_time = new_tmp_time
 
         df = pd.concat(record_df).set_index("timestamp")
         df.index = pd.to_datetime(df.index.astype(float), unit="ms")
@@ -170,7 +170,7 @@ class FundingRate(Crawler):
 
         df = pd.concat(record_df).set_index("fundingTime")
         df.index = pd.to_datetime(df.index.astype(float), unit="ms")
-        df.index = df.index.round('S')
+        df.index = df.index.round('s')
         df = df.sort_index()
         df = df.drop_duplicates(keep='first')
         df["fundingRate"] = df["fundingRate"].astype(float)
@@ -231,7 +231,7 @@ def renew_data():
     base_path = "./data/storage"
     base = "USDT"
 
-    # Base Data
+    # # Base Data
     # print(f'Spot Data:')
     # for symbol in Symbols:
     #     pair = symbol.value + base
@@ -254,7 +254,6 @@ def renew_data():
         funding_rate = FundingRate(symbol=pair, start_date=start_date, end_date=end_date)
         funding_rate_df = funding_rate.Get()
         funding_rate_df.to_csv(f"{base_path}/funding-rate/{pair}.csv")
-    exit()
 
     # Future Data (BTC, ETH)
     print(f'\nFuture Data:')

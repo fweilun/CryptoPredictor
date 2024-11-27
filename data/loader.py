@@ -7,7 +7,9 @@ import numpy as np
 MODULE_DIR = os.path.dirname(__file__)
 STORAGE_DIR = os.path.join(MODULE_DIR, "storage")
 SPOT_STORAGE_DIR = os.path.join(STORAGE_DIR, "spot")
+FUTURE_STORAGE_DIR = os.path.join(STORAGE_DIR, "future")
 FUNDING_RATE_DIR = os.path.join(STORAGE_DIR, "funding-rate")
+LONG_SHORT_RATIO_DIR = os.path.join(STORAGE_DIR, "long-short-ratio")
 
 
 
@@ -103,12 +105,24 @@ class Loader:
             "high",
             "low"
             ]).set_index("timestamp")
-        
+
         X["funding_rate"] = Loader.load_funding_rate(symbol=target)["fundingRate"]
         X["funding_rate"] = X["funding_rate"].bfill()
         X["funding_rate_ema0.05"] = X["funding_rate"].ewm(alpha=0.05).mean()
         X["funding_rate_ema0.2"] = X["funding_rate"].ewm(alpha=0.2).mean()
-        
+
+        future_data = Loader.load_future_data(symbol=target)
+        future_data = future_data.drop_duplicates(keep='first')
+
+        X["future_open"] = future_data["open"]
+        X["future_high"] = future_data["high"]
+        X["future_low"] = future_data["low"]
+        X["future_close"] = future_data["close"]
+        X["future_volume"] = future_data["volume"]
+
+        # # FIXME:
+        # X["long_short_ratio"] = Loader.load_long_short_ratio(symbol=target)["longShortRatio"]
+        # X["long_short_ratio"] = X["long_short_ratio"].bfill()
         
         X.index = pd.to_datetime(X.index)
         
@@ -177,6 +191,14 @@ class Loader:
         coin_data = coin_data.set_index("timestamp")
         coin_data.index = pd.to_datetime(coin_data.index)
         return coin_data
+
+    @classmethod
+    def load_future_data(cls, symbol:str="BTCUSDT"):
+        file_path = os.path.join(FUTURE_STORAGE_DIR, f"{symbol}.csv")
+        future_data = pd.read_csv(file_path)
+        future_data = future_data.set_index("timestamp")
+        future_data.index = pd.to_datetime(future_data.index)
+        return future_data
     
     @classmethod
     def load_funding_rate(cls, symbol:str="BTCUSDT"):
@@ -185,8 +207,18 @@ class Loader:
         fr_data = fr_data.set_index("fundingTime")
         fr_data.index = pd.to_datetime(fr_data.index)
         fr_data = fr_data.drop_duplicates(keep='first')
-        fr_data.index = fr_data.index.round('S')
+        fr_data.index = fr_data.index.round('s')
         return fr_data
+
+    @classmethod
+    def load_long_short_ratio(cls, symbol:str="BTCUSDT"):
+        file_path = os.path.join(LONG_SHORT_RATIO_DIR, f"{symbol}.csv")
+        lsr_data = pd.read_csv(file_path)
+        lsr_data = lsr_data.set_index("timestamp")
+        lsr_data.index = pd.to_datetime(lsr_data.index)
+        lsr_data = lsr_data.drop_duplicates(keep='first')
+        lsr_data.index = lsr_data.index.round('s')
+        return lsr_data 
     
     @classmethod
     def load_stock_data(cls, ticker:str="SPY"):
