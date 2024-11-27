@@ -1,16 +1,16 @@
 TARGET: 'BTCUSDT'
 DELAY: 1000
 HOURS: 72
-JUMP: 50
-GAP: 18 # HOURS/4
+JUMP: 20
+GAP: 0 # HOURS/4
 
 backtest:
-  start_date: '2021-01-01'
-  end_date: '2024-10-01'
-  train_period: 1000
-  test_period: 50
+  start_date: '2021-05-01'
+  end_date: '2024-03-01'
+  train_period: 50
+  test_period: 20
   
 
 test_factor:
-  start_date: '2021-01-01'
-  end_date: '2024-01-01'
+  start_date: '2021-05-01'
+  end_date: '2024-03-01'
