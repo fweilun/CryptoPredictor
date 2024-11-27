@@ -153,12 +153,15 @@ def show_all():
         factor.weilun05,
         factor.weilun06,
         factor.weilun07,
-        factor.weilun08,
-        factor.weilun09,
+        # factor.weilun08,
+        # factor.weilun09,
         factor.Cross,
         factor.CrossRSI,
         factor.Slope,
         factor.Skewness,
+        factor.FundingRate,
+        factor.Momentum,
+        factor.SpotFutureSpread,
     ]
     
     train, test = Loader.make_not_overlap(target=TARGET, delay=DELAY, hours=HOURS)
