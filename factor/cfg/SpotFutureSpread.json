@@ -1,0 +1,8 @@
+{
+    "description": "spot and futures price spread analysis factor",
+    "signal_list": [
+        {"signal": "SpotFutureSpread", "argument": {"periods": [7]}},
+        {"signal": "SpotFutureSpread", "argument": {"periods": [14]}},
+        {"signal": "SpotFutureSpread", "argument": {"periods": [30]}}
+    ]
+}
