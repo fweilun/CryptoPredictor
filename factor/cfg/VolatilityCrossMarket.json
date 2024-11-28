@@ -1,0 +1,8 @@
+{
+    "description": "Cross-market volatility correlation factor",
+    "signal_list": [
+        {"signal": "VolatilityCrossMarket", "argument": {"periods": [5], "volatility_type": "parkinson"}},
+        {"signal": "VolatilityCrossMarket", "argument": {"periods": [10], "volatility_type": "yang_zhang"}},
+        {"signal": "VolatilityCrossMarket", "argument": {"periods": [20], "volatility_type": "parkinson"}}
+    ]
+}
