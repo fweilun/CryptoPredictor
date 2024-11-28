@@ -1,0 +1,4 @@
+,VolumeAnomaly_5_zscore,VolumeAnomaly_10_zscore,VolumeAnomaly_20_zscore
+VolumeAnomaly_5_zscore,1.0,0.888525251833967,0.7646536974391059
+VolumeAnomaly_10_zscore,0.888525251833967,1.0,0.8949919174598752
+VolumeAnomaly_20_zscore,0.7646536974391059,0.8949919174598752,1.0

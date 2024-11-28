@@ -1,0 +1,8 @@
+{
+    "description": "Volume anomaly detection factor",
+    "signal_list": [
+        {"signal": "VolumeAnomaly", "argument": {"periods": [5], "method": "zscore"}},
+        {"signal": "VolumeAnomaly", "argument": {"periods": [10], "method": "zscore"}},
+        {"signal": "VolumeAnomaly", "argument": {"periods": [20], "method": "zscore"}}
+    ]
+}
