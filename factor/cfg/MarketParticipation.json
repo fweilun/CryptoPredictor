@@ -1,0 +1,8 @@
+{
+    "description": "Market participation factor measuring active buying and overall volume",
+    "signal_list": [
+        {"signal": "MarketParticipation", "argument": {"periods": [5]}},
+        {"signal": "MarketParticipation", "argument": {"periods": [10]}},
+        {"signal": "MarketParticipation", "argument": {"periods": [20]}}
+    ]
+}
