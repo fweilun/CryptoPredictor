@@ -13,3 +13,4 @@ numpy
 importlib
 tqdm
 scikit-learn
+ta-lib
