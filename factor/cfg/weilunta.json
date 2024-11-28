@@ -1,0 +1,13 @@
+{
+    "description": "RSI and SMA based trading signals.",
+    "signal_list": [
+        {"signal": "TAFactor","argument": {"n": 20,"rsi_period": 14,"sma_period": 50}},
+        {"signal": "TAFactor","argument": {"n": 20,"rsi_period": 14,"sma_period": 200}},
+        {"signal": "TAFactor","argument": {"n": 3,"rsi_period": 7,"sma_period": 50}},
+        {"signal": "TAFactor","argument": {"n": 5,"rsi_period": 30,"sma_period": 50}},
+        {"signal": "TAFactor","argument": {"n": 20,"rsi_period": 14,"sma_period": 10}},
+        {"signal": "TAFactor","argument": {"n": 20,"rsi_period": 14,"sma_period": 100}},
+        {"signal": "TAFactor","argument": {"n": 20,"rsi_period": 14,"sma_period": 150}},
+        {"signal": "TAFactor","argument": {"n": 20,"rsi_period": 7,"sma_period": 100}}
+    ]
+}

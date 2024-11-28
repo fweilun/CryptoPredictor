@@ -8,6 +8,8 @@ import pandas as pd
 import importlib, tqdm, factor, argparse, os
 import loggings as log
 from backtest.utils import FactorTest
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
 
 _debug_flag = False
 
@@ -94,7 +96,41 @@ class FactorRunner:
                 signal.save_signal_output(signal_output)
         
         return signal_results
-    
+
+    def run1taclass(self, factor_class:Factor, rerun=True, plot=False):
+        signal_results = pd.DataFrame()
+        _logger.info("Run on a signal class: %s", str(factor_class))
+        for signal in factor_class.load_signals():
+            _logger.debug("Current signal: %s, loading target: %s", signal, self.target)
+            signal.load_target(self.target)
+            
+            padding = 30
+            signal_output = None
+            if rerun or (not signal.output_exist):
+                _logger.info("Running signal %s due to %s.", signal.__str__(), "rerun" if rerun else "output not exist")
+                signal_output = signal.GenAll(self.X)
+                signal.delete_exist_result()
+                signal.make_result_dir()
+            else:
+                _logger.debug("Loading signal output.")
+                signal_output = signal.load_signal_output()
+                
+            _logger.debug("%s %s", "    start date:".ljust(padding), signal_output.index[0])
+            _logger.debug("%s %s", "    end date:".ljust(padding), signal_output.index[-1])
+            _logger.debug("%s %s", "    cases:".ljust(padding), signal_output.index.__len__())
+            signal_output = signal_output.loc[self.start_date: self.end_date]
+            _logger.debug("%s %s", "    filtered start date:".ljust(padding), signal_output.index[0])
+            _logger.debug("%s %s", "    filtered end date:".ljust(padding), signal_output.index[-1])
+            _logger.debug("%s %s", "    filtered cases:".ljust(padding), signal_output.index.__len__())
+
+            signal_results[signal.__str__()] = signal_output
+            if plot: self.__save_plots(signal, signal_output)
+            
+            if rerun or (not signal.output_exist):
+                signal.save_signal_output(signal_output)
+        
+        return signal_results
+  
     def __save_plots(self, signal:Factor, signal_output):
         distribution_path = os.path.join(signal.result_path, "distribution.png")
         plt.hist(signal_output, bins=100)
@@ -106,27 +142,50 @@ class FactorRunner:
         plt.savefig(ts_plot_path)
         plt.close()
 
+# def test1factor_by_class(factor: Factor, rerun=True, plot=False):
+#     train, test = Loader.make_not_overlap(target=TARGET, delay=DELAY, hours=HOURS)
+#     factor_runner = FactorRunner(train, test, target=TARGET)
+#     index = test.index
+    
+#     _logger.info("Start time: {}. End time: {}.".format(index[0], index[-1]))
+#     _logger.info("Number of cases: {}".format(len(train)))
+#     _logger.info("Predict interval: {} hours".format(HOURS))
+    
+#     signal_results = factor_runner.run1class(factor, rerun=rerun, plot=plot)
 
+#     # train by fixed interval, setting.yml
+#     signal_results = signal_results.loc[start_date:end_date]
+#     test = test.loc[start_date:end_date]
+    
+#     _logger.info("Report generate on:")
+#     _logger.info("      Start time: %s", signal_results.index[0])
+#     _logger.info("      End time: %s", signal_results.index[-1])
+#     scoring = make_signal_report(signal_results=signal_results, test=test)
+#     result_class_path:str = factor.result_class_path(target=TARGET)
+#     scoring.to_csv(os.path.join(result_class_path, "report.csv"))
+#     signal_results.corr().to_csv(os.path.join(result_class_path, "corr.csv"))
+    
+    
+#     print("factor results:")
+#     print(scoring)
+#     print("correlation matrix:")
+#     print(signal_results.corr())
 
-
-def test1factor_by_class(factor: Factor, rerun=True, plot=False):
-    train, test = Loader.make_not_overlap(target=TARGET, delay=DELAY, hours=HOURS)
+# def test1factor_by_name(factor_name, rerun=True, plot=False):
+#     module = importlib.import_module(f'factor.signal.{factor_name}')
+#     BaseClass: Factor = getattr(module, factor_name)
+#     test1factor_by_class(BaseClass, rerun=rerun, plot=plot)
+    
+def test1tafactor_by_class(factor: Factor, rerun=True, plot=False):
+    train, test = Loader.make_not_overlap(target=TARGET, delay=DELAY, hours=HOURS, dtype="continuous")
     factor_runner = FactorRunner(train, test, target=TARGET)
     index = test.index
     
-    _logger.info("Start time: {}. End time: {}.".format(index[0], index[-1]))
-    _logger.info("Number of cases: {}".format(len(train)))
-    _logger.info("Predict interval: {} hours".format(HOURS))
-    
-    signal_results = factor_runner.run1class(factor, rerun=rerun, plot=plot)
-
+    signal_results = factor_runner.run1taclass(factor, rerun=rerun, plot=plot)
     # train by fixed interval, setting.yml
     signal_results = signal_results.loc[start_date:end_date]
     test = test.loc[start_date:end_date]
     
-    _logger.info("Report generate on:")
-    _logger.info("      Start time: %s", signal_results.index[0])
-    _logger.info("      End time: %s", signal_results.index[-1])
     scoring = make_signal_report(signal_results=signal_results, test=test)
     result_class_path:str = factor.result_class_path(target=TARGET)
     scoring.to_csv(os.path.join(result_class_path, "report.csv"))
@@ -137,47 +196,49 @@ def test1factor_by_class(factor: Factor, rerun=True, plot=False):
     print(scoring)
     print("correlation matrix:")
     print(signal_results.corr())
-
-
-def test1factor_by_name(factor_name, rerun=True, plot=False):
+    
+def test1tafactor_by_name(factor_name, rerun=True, plot=False):
     module = importlib.import_module(f'factor.signal.{factor_name}')
     BaseClass: Factor = getattr(module, factor_name)
-    test1factor_by_class(BaseClass, rerun=rerun, plot=plot)
+    test1tafactor_by_class(BaseClass, rerun=rerun, plot=plot)
+    
 
-def show_all():
-    factor_cls_list = [
-        factor.weilun01,
-        factor.weilun02,
-        factor.weilun03,
-        factor.weilun04,
-        factor.weilun05,
-        factor.weilun06,
-        factor.weilun07,
-        # factor.weilun08,
-        # factor.weilun09,
-        factor.Cross,
-        factor.CrossRSI,
-        factor.Slope,
-        factor.Skewness,
-        factor.FundingRate,
-        factor.Momentum,
-        factor.SpotFutureSpread,
-    ]
+# def show_all():
+#     factor_cls_list = [
+#         factor.weilun01,
+#         factor.weilun02,
+#         factor.weilun03,
+#         factor.weilun04,
+#         factor.weilun05,
+#         factor.weilun06,
+#         factor.weilun07,
+#         # factor.weilun08,
+#         # factor.weilun09,
+#         factor.Cross,
+#         factor.CrossRSI,
+#         factor.Slope,
+#         factor.Skewness,
+#         factor.FundingRate,
+#         factor.Momentum,
+#         factor.SpotFutureSpread,
+#     ]
     
-    train, test = Loader.make_not_overlap(target=TARGET, delay=DELAY, hours=HOURS)
+#     # train, test = Loader.make_not_overlap(target=TARGET, delay=DELAY, hours=HOURS)
+#     train, test = Loader.make_not_overlap(target=TARGET, delay=DELAY, hours=HOURS, dtype="continuous")
     
-    factor_runner = FactorRunner(X=train, y=test, target=TARGET)
-    scoring_df = pd.DataFrame()
-    for factor_cls in factor_cls_list:
-        signal_results = factor_runner.run1class(factor_cls, rerun=False, plot=False)
-        scoring = make_signal_report(signal_results=signal_results, test=test)
-        result_class_path:str = factor_cls.result_class_path(target=TARGET)
-        scoring.to_csv(os.path.join(result_class_path, "report.csv"))
-        signal_results.corr().to_csv(os.path.join(result_class_path, "corr.csv"))
-        scoring_df = pd.concat([scoring_df, scoring])
+#     factor_runner = FactorRunner(X=train, y=test, target=TARGET)
+#     scoring_df = pd.DataFrame()
+#     for factor_cls in factor_cls_list:
+#         signal_results = factor_runner.run1class(factor_cls, rerun=False, plot=False)
+#         scoring = make_signal_report(signal_results=signal_results, test=test)
+#         result_class_path:str = factor_cls.result_class_path(target=TARGET)
+#         scoring.to_csv(os.path.join(result_class_path, "report.csv"))
+#         signal_results.corr().to_csv(os.path.join(result_class_path, "corr.csv"))
+#         scoring_df = pd.concat([scoring_df, scoring])
         
-    pd.set_option('display.max_rows', 100)
-    print(scoring_df)
+#     pd.set_option('display.max_rows', 100)
+#     print(scoring_df)
+
 
 def main():
     parser = argparse.ArgumentParser(description="Run factor tests with given parameters.")
@@ -186,10 +247,11 @@ def main():
     
     if args.factor_name == "all":
         _logger.info("Running tests for all factors.")
-        show_all()
+        # show_all()
+        
     else:
         _logger.info("Running tests for factor: {}".format(args.factor_name))
-        test1factor_by_name(args.factor_name, rerun=True, plot=True)
+        test1tafactor_by_name(args.factor_name, rerun=True, plot=True)
 
 if __name__ == "__main__":
     main()

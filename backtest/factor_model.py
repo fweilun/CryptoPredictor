@@ -7,13 +7,14 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 from typing import List, Dict
 from sklearn.linear_model import LassoCV, LinearRegression, RidgeCV
-from backtest.test_factor import make_signal_report, test1factor_by_class
+from backtest.test_factor import make_signal_report, test1tafactor_by_class
 from sklearn.preprocessing import StandardScaler
 from typing import List
 from config.load import load_config
 from backtest.test_factor import FactorRunner
 from backtest.utils import FactorTest, index_contains
 import loggings as log
+import talib
 # import logging
 
 warnings.filterwarnings("ignore")
@@ -39,36 +40,6 @@ JUMP = config.get("JUMP")
 GAP = config.get("GAP")
 train_period = config.get("backtest").get("train_period")
 test_period = config.get("backtest").get("test_period")
-
-
-
-
-
-class FactorResultCaching:
-    def __init__(self, target, factors:List[factor.BaseFactor]):
-        self.cached_data:pd.DataFrame = None
-        self.target = target
-        self.factors = factors
-    
-    def search(self, index):
-        if not index_contains(self.cached_data.index, index):
-            raise Exception("Cached data not include all index.")
-        
-        return self.cached_data.loc[index:]
-    
-    def prepare(self, index):
-        for f in self.factors: f.load_target(self.target)
-        for fctr in self.factors:
-            if (fctr.exist and index_contains(fctr.load_signal_output().index, index)):
-                continue
-            else:
-                print(f"running factor {fctr}")
-                test1factor_by_class(fctr, rerun=True, plot=True)
-                
-        self.cached_data = pd.concat([fctr.load_signal_output().loc[index] for fctr in self.factors if fctr.exist], axis=1)
-        # self.cached_data = self.cached_data[:"2024-04-01"]
-    
-    
 
 
 
@@ -182,6 +153,9 @@ class FactorModel:
     
     def predict_on_features(self, x_train):
         if self.__debug: print("fetch cached data.")
+        # print(x_train)
+        # print(self.__signal_order)
+        # exit()
         factor_df_scaled = self.__scalar.transform(x_train[self.__signal_order])
         if self.__debug: print("matrix multiplication.")
         return self.__model.predict(factor_df_scaled)
@@ -235,25 +209,39 @@ class FactorModel:
         return x_train.dropna()
 
 
-
-
 class RollingFitter:
-    def __init__(self, core, train_period, test_period, gap, jump):
+    def __init__(self, core, train_period, test_period, gap, jump, target):
         self.train_period:int = train_period
         self.test_period:int = test_period
         self.jump:int = jump
         self.gap:int = gap
         self.core:FactorModel = core
-        self.cache:FactorResultCaching = None
+        self.target = target
         self.pred_record = None
         self.test_record = None
+        
+        self.X:pd.DataFrame = None
+        self.y:pd.DataFrame = None
     
-    def init_cache(self, cache):
-        self.cache = cache
+    def load_y(self, y):
+        self.y = y
     
-    def fit_on_cache(self, y):
-        self.cache.prepare(y.index)
-        n = len(y)
+    def load_factor_result(self):
+        factors = self.core.all_factors
+        for f in factors: f.load_target(self.target)
+        
+        for fctr in factors:
+            if (fctr.exist and index_contains(fctr.load_signal_output().index, self.y.index)):
+                continue
+            else:
+                print(f"running factor {fctr}")
+                test1tafactor_by_class(fctr, rerun=True, plot=True)
+                     
+        self.X = pd.concat([fctr.load_signal_output().loc[self.y.index] for fctr in factors], axis=1)
+        
+        
+    def fit(self):
+        n = len(self.y)
         
         pred_record = []
         test_record = []
@@ -264,8 +252,8 @@ class RollingFitter:
             test_start = end + self.gap
             test_end = test_start + self.test_period
             
-            train_y = y[start:end]
-            test_y = y[test_start:test_end]
+            train_y = self.y[start:end]
+            test_y = self.y[test_start:test_end]
             
             _logger.debug(
                 "Training period: %s-%s, Testing period: %s-%s", 
@@ -274,8 +262,8 @@ class RollingFitter:
             )
             
             # load cached data
-            train_x = self.cache.cached_data.loc[train_y.index]
-            test_x = self.cache.cached_data.loc[test_y.index]
+            train_x = self.X.loc[train_y.index]
+            test_x = self.X.loc[test_y.index]
             assert index_contains(train_x.index, train_y.index), "index contains error"
             assert index_contains(test_x.index, test_y.index), "index contains error"
             
@@ -333,7 +321,7 @@ class FactorModelPerformanceEvaluator:
 
 
 def main():
-    X, y = Loader.make_not_overlap(target=TARGET, delay=DELAY, hours=HOURS)
+    X, y = Loader.make_not_overlap(target=TARGET, delay=DELAY, hours=HOURS, dtype="continuous")
     factor_model = FactorModel(threshold=1.2, target=TARGET)
     
     factor_model.load_factors([
@@ -341,15 +329,16 @@ def main():
         factor.weilun02,
         factor.weilun03,
         factor.weilun04,
-        factor.weilun05,
-        factor.weilun06,
-        factor.weilun07,
-        factor.weilun08,
-        factor.weilun09,
-        # factor.Cross,
-        factor.CrossRSI,
-        factor.Slope,
-        factor.Skewness,
+        # factor.weilun05,
+        # factor.weilun06,
+        # factor.weilun07,
+        # factor.weilun08,
+        # factor.weilun09,
+        factor.Cross,
+        # factor.CrossRSI,
+        # factor.Slope,
+        # factor.Skewness,
+        
     ])
     
     
@@ -358,12 +347,13 @@ def main():
         train_period=train_period, 
         test_period=test_period,
         gap=GAP, 
-        jump=JUMP)
+        jump=JUMP,
+        target=TARGET)
     
-    rollingfit.init_cache(
-        FactorResultCaching(target=factor_model.target, factors=factor_model.all_factors))
+    rollingfit.load_y(y=y)
+    rollingfit.load_factor_result()
+    res = rollingfit.fit()
     
-    res = rollingfit.fit_on_cache(y)
     evaluator = FactorModelPerformanceEvaluator(res)
     # print(res)
     evaluator.mock_trade()

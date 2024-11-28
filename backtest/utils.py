@@ -16,7 +16,7 @@ class FactorTest:
         
         for i in range(n):
             x_ = signal_output.iloc[i]
-            y_ = test[i]
+            y_ = test.iloc[i]
             x_ = int(x_ > 0) - int(x_ < 0)
             y_ = int(y_ > 0) - int(y_ < 0)
             counter += (x_ == y_) & (y_ != 0)
@@ -48,6 +48,9 @@ class FactorTest:
         corr = np.corrcoef(x, y)
         if not np.isnan(corr).any():
             return corr[0,1]
+        
+        # if (x[1:] - x[:-1]).sum() == 0:
+        #     return 0
         
         return pd.DataFrame([x, y]).T.dropna().corr().iloc[0,1]
     
