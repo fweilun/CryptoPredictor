@@ -7,12 +7,12 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 from typing import List, Dict
 from sklearn.linear_model import LassoCV, LinearRegression, RidgeCV
-from backtest.test_factor import make_signal_report, test1tafactor_by_class
+from backtest.test_factor import test1tafactor_by_class
 from sklearn.preprocessing import StandardScaler
 from typing import List
 from config.load import load_config
 from backtest.test_factor import FactorRunner
-from backtest.utils import FactorTest, index_contains
+from backtest.utils import FactorTest, index_contains, factor_model_signal_report
 import loggings as log
 import talib
 # import logging
@@ -56,9 +56,7 @@ class FactorModel:
         
         def fit(self, X, y):
             # turn X to feature matrix
-            # train on X, y
-            # receive model coef_data
-            pass
+            # test on X, ytest            # testve model coef_datatest            pass
         
         def predict(self):
             pass
@@ -163,7 +161,7 @@ class FactorModel:
     def __select_columns(self, x:pd.DataFrame, y, threshold=0):
         max_correlation = 0.8
         selected_features = []
-        signal_report = make_signal_report(x, y)
+        signal_report = factor_model_signal_report(x, y)
         '''
         select conditions
         1. with higher score
@@ -225,22 +223,9 @@ class RollingFitter:
     
     def load_y(self, y):
         self.y = y
-    
-    def load_factor_result(self):
-        factors = self.core.all_factors
-        for f in factors: f.load_target(self.target)
-        
-        for fctr in factors:
-            if (fctr.exist and index_contains(fctr.load_signal_output().index, self.y.index)):
-                continue
-            else:
-                print(f"running factor {fctr}")
-                test1tafactor_by_class(fctr, rerun=True, plot=True)
-                     
-        self.X = pd.concat([fctr.load_signal_output().loc[self.y.index] for fctr in factors], axis=1)
-        
         
     def fit(self):
+        self.__load_factor_result()
         n = len(self.y)
         
         pred_record = []
@@ -264,8 +249,15 @@ class RollingFitter:
             # load cached data
             train_x = self.X.loc[train_y.index]
             test_x = self.X.loc[test_y.index]
+            
+            
             assert index_contains(train_x.index, train_y.index), "index contains error"
             assert index_contains(test_x.index, test_y.index), "index contains error"
+            
+            train_x = train_x.iloc[::HOURS//4]
+            train_y = train_y.iloc[::HOURS//4]
+            test_x = test_x.iloc[::HOURS//4]
+            test_y = test_y.iloc[::HOURS//4]
             
             self.core.fit_on_features(train_x, train_y)
             pred_y = self.core.predict_on_features(test_x)
@@ -282,6 +274,28 @@ class RollingFitter:
             "test_record": test_record,
             "weights_record": weights_record,
         }
+        
+    def __load_factor_result(self):
+        factors = self.core.all_factors
+        for f in factors: f.load_target(self.target)
+        
+        for fctr in factors:
+            if (fctr.exist and index_contains(fctr.load_signal_output().index, self.y.index)):
+                continue
+            else:
+                print(f"running factor {fctr}")
+                test1tafactor_by_class(fctr, rerun=True, plot=True)
+                     
+        self.X = pd.concat([fctr.load_signal_output().loc[self.y.index] for fctr in factors], axis=1)
+        print("%d of factor results.", len(self.X.columns))
+        self.X = self.X.loc[~self.X.isna().all(axis=1), :]
+        print("%d of factor results after drop.", len(self.X.columns))
+        first_valid_index = self.X.loc[~self.X.isna().any(axis=1)].index[0]
+        print("start time:", self.X.index[0])
+        print("remove na, start time:", first_valid_index)
+        self.X = self.X.loc[first_valid_index:]
+        self.y = self.y.loc[first_valid_index:]
+        
 
 
 class FactorModelPerformanceEvaluator:
@@ -295,17 +309,22 @@ class FactorModelPerformanceEvaluator:
         pred = pd.concat(self.pred_record, axis=0)
         y = pd.concat(self.test_record, axis=0)
         signal = (pred > 0).astype(int)
-        
-        result = (1 + y.loc[signal.index] * signal).cumprod()
-        result2 = (1 + y.loc[signal.index]).cumprod()
+        # result = (1 + y.loc[signal.index] * signal).cumprod()
+        # result2 = (1 + y.loc[signal.index]).cumprod()
         
         returns1 = y.loc[signal.index] * signal
         returns2 = y.loc[signal.index]
+        # returns1 = returns1[::18]
+        # returns2 = returns2[::18]
+        
+        result = (1 + returns1).cumprod()
+        result2 = (1 + returns2).cumprod()
+        
         sharpe1 = (returns1.mean()/returns1.std())
         sharpe2 = (returns2.mean()/returns2.std())
         print(sharpe1, sharpe2)
-        # print(returns1.mean(), returns1.std(), result[-1] / returns1.std())
-        # print(returns2.mean(), returns2.std(), result2[-1] / returns2.std())
+        print(returns1.mean(), returns1.std(), result[-1] / returns1.std())
+        print(returns2.mean(), returns2.std(), result2[-1] / returns2.std())
         
         print(FactorTest.accuracy(signal, y.loc[signal.index]))
         print(FactorTest.correlation(signal, y.loc[signal.index]))
@@ -321,7 +340,8 @@ class FactorModelPerformanceEvaluator:
 
 
 def main():
-    X, y = Loader.make_not_overlap(target=TARGET, delay=DELAY, hours=HOURS, dtype="continuous")
+    _, y = Loader.make_not_overlap(target=TARGET, delay=DELAY, hours=HOURS, dtype="continuous")
+    
     factor_model = FactorModel(threshold=1.2, target=TARGET)
     
     factor_model.load_factors([
@@ -329,15 +349,15 @@ def main():
         factor.weilun02,
         factor.weilun03,
         factor.weilun04,
-        # factor.weilun05,
+        factor.weilun05,
         # factor.weilun06,
-        # factor.weilun07,
+        factor.weilun07,
         # factor.weilun08,
         # factor.weilun09,
         factor.Cross,
-        # factor.CrossRSI,
-        # factor.Slope,
-        # factor.Skewness,
+        # factor.CrossRSI
+        factor.Slope,
+        factor.Skewness,
         
     ])
     
@@ -351,11 +371,9 @@ def main():
         target=TARGET)
     
     rollingfit.load_y(y=y)
-    rollingfit.load_factor_result()
     res = rollingfit.fit()
     
     evaluator = FactorModelPerformanceEvaluator(res)
-    # print(res)
     evaluator.mock_trade()
 
 
