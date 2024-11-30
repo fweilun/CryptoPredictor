@@ -28,19 +28,19 @@ class FactorTest:
         return max(acc, 1-acc)
     
     @classmethod
-    def zero_percent(cls, signal_output):
+    def zero_percent(cls, signal_output, _):
         return (signal_output == 0).sum()/len(signal_output)
     
     @classmethod
-    def mean(cls, signal_output):
+    def mean(cls, signal_output, _):
         return np.mean(signal_output)
     
     @classmethod
-    def std(cls, signal_output):
+    def std(cls, signal_output, _):
         return np.std(signal_output)
     
     @classmethod
-    def skewness(cls, signal_output):
+    def skewness(cls, signal_output, _):
         return pd.Series(signal_output).skew()
     
     @classmethod
@@ -110,6 +110,42 @@ class FactorTest:
             print(k, test_func(x, y))
         
         
+def make_signal_report(signal_results, test, factor_tests=None):
+    if factor_tests is None:
+        factor_tests = [
+            FactorTest.correlation,
+            FactorTest.correlation_stable,
+            FactorTest.accuracy,
+            FactorTest.mean,
+            FactorTest.std,
+            FactorTest.skewness,
+            FactorTest.zero_percent
+        ]
+    
+    scoring = pd.DataFrame(index=signal_results.columns)
+    keys = signal_results.columns
+    for factor_test in factor_tests:
+        scoring[factor_test.__name__] = [
+            factor_test(signal_results[k], test) for k in keys
+        ]
+    
+    return scoring
+ 
+test_factor_signal_report = lambda signal_results, test:make_signal_report(signal_results,test, factor_tests=[
+    FactorTest.correlation,
+    FactorTest.correlation_stable,
+    FactorTest.accuracy,
+    FactorTest.mean,
+    FactorTest.std,
+    FactorTest.skewness,
+    FactorTest.zero_percent
+])
+
+factor_model_signal_report = lambda signal_results, test:make_signal_report(signal_results,test, factor_tests=[
+    FactorTest.correlation,
+    FactorTest.correlation_stable,
+])
+
         
 def index_contains(index1:pd.Index, index2:pd.Index):
     index1 = index2.intersection(index1)
