@@ -22,15 +22,16 @@ HOURS = config.get("HOURS")
 start_date = config.get("test_factor").get("start_date")
 end_date = config.get("test_factor").get("end_date")
 
+base_dir = os.path.abspath("factor/result")
 
 @app.route('/get_distribution/<target>/<class_name>/<signal_name>')
 def get_distribution(target, class_name, signal_name):
-    directory = f"/Users/user/Desktop/stock/CryptoPredictor/factor/result/{target}/{class_name}/{signal_name}"
+    directory = f"{base_dir}/{target}/{class_name}/{signal_name}"
     return send_from_directory(directory, "distribution.png")
 
 @app.route('/get_ts_plot/<target>/<class_name>/<signal_name>')
 def get_ts_plot(target, class_name, signal_name):
-    directory = f"/Users/user/Desktop/stock/CryptoPredictor/factor/result/{target}/{class_name}/{signal_name}"
+    directory = f"{base_dir}/{target}/{class_name}/{signal_name}"
     return send_from_directory(directory, "ts_plot.png")
 
 @app.route('/')
