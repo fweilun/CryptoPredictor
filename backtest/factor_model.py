@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 from typing import List, Dict
 from sklearn.linear_model import LassoCV, LinearRegression, RidgeCV
-from backtest.test_factor import test1tafactor_by_class
 from sklearn.preprocessing import StandardScaler
 from typing import List
 from config.load import load_config
