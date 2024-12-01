@@ -52,11 +52,39 @@
             max-width: 45%;
             height: auto;
         }
+        .navigation {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .home-button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .home-button:hover {
+            background-color: #45a049;
+        }
+        .factor-dropdown {
+            padding: 10px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1 id="page-title">Signal Report - {{ factor_name }}</h1>
+        <div class="navigation">
+            <a href="/" class="home-button">Home</a>
+            <select id="factor-select" class="factor-dropdown" onchange="navigateToFactorPage()">
+                <option value="">--Please Select--</option>
+                {% for factor in factors %}
+                    <option value="{{ factor }}" {% if factor == factor_name %}selected{% endif %}>{{ factor }}</option>
+                {% endfor %}
+            </select>
+        </div>
         <div>
             {{ report_table | safe }}
         </div>
@@ -69,5 +97,14 @@
             {% endfor %}
         </div>
     </div>
+    <script>
+        function navigateToFactorPage() {
+            var select = document.getElementById("factor-select");
+            var factor = select.value;
+            if (factor) {
+                window.location.href = "/" + factor;
+            }
+        }
+    </script>
 </body>
 </html>

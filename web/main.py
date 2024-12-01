@@ -35,6 +35,8 @@ def get_ts_plot(target, class_name, signal_name):
 
 @app.route('/<signal_name>')
 def report(signal_name):
+    path = os.path.join(base_dir, TARGET)
+    factors = os.listdir(path)
     factor_cls = Factor.find_signal_class(signal_name)
     result_path = factor_cls.result_class_path(TARGET)
     
@@ -54,7 +56,7 @@ def report(signal_name):
             </div>
         ''')
         
-    return render_template('report.html', report_table=report_table, corr_table=corr_table, plots=plots, factor_name=factor_cls.__name__)
+    return render_template('report.html', report_table=report_table, corr_table=corr_table, plots=plots, factor_name=factor_cls.__name__, factors=factors)
 
 @app.route('/')
 def home():
