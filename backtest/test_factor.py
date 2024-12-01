@@ -147,20 +147,25 @@ def main():
     if args.factor_name == "all":
         _logger.info("Running tests for all factors.")
         factors_cls:List[Factor] = [
-            factor.weilun01,
+            # factor.weilun01,
             factor.weilun02,
             factor.weilun03,
             factor.weilun04,
-            factor.weilun05,
+            # factor.weilun05,
             # factor.weilun06,
-            factor.weilun07,
-            # factor.weilun08,
-            # factor.weilun09,
-            factor.Cross,
-            # factor.CrossRSI
-            factor.Slope,
-            factor.Skewness,
-            
+            # factor.weilun07,
+            factor.weilunta,
+            # factor.Cross,
+            # factor.CrossRSI,
+            # factor.DPO,
+            factor.FundingRate,
+            factor.MarketParticipation,
+            factor.Momentum,
+            # factor.Skewness,
+            # factor.Slope,
+            factor.SpotFutureSpread,
+            factor.VolatilityCrossMarket,
+            factor.VolumeAnomaly,
         ]
         runner = FactorRunner(target=TARGET, mode="default")
         all_signals:List[Factor] = []
