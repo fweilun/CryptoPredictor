@@ -1,4 +1,3 @@
-
 from factor.factors import Factor
 from factor.signal.Cross import Cross
 from data.loader import Loader
@@ -34,10 +33,8 @@ def get_ts_plot(target, class_name, signal_name):
     directory = f"{base_dir}/{target}/{class_name}/{signal_name}"
     return send_from_directory(directory, "ts_plot.png")
 
-@app.route('/')
-def home():
-    
-    signal_name = request.args.get('signal_id')
+@app.route('/<signal_name>')
+def report(signal_name):
     factor_cls = Factor.find_signal_class(signal_name)
     result_path = factor_cls.result_class_path(TARGET)
     
@@ -57,9 +54,15 @@ def home():
             </div>
         ''')
         
-    return render_template('report.html', report_table=report_table, corr_table=corr_table, plots=plots)
+    return render_template('report.html', report_table=report_table, corr_table=corr_table, plots=plots, factor_name=factor_cls.__name__)
 
+@app.route('/')
+def home():
+    path = os.path.join(base_dir, TARGET)
+    factors = os.listdir(path)
+    
+    return render_template('home.html', factors=factors) 
+    
 
 if __name__ == "__main__":
-    print()
-    app.run(debug=True)
+    app.run(debug=True, port=3000)

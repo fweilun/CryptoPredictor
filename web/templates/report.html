@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Signal Report</title>
+    <title>Signal Report - {{ factor_name }}</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -56,14 +56,14 @@
 </head>
 <body>
     <div class="container">
-        <h1>Signal Report</h1>
+        <h1 id="page-title">Signal Report - {{ factor_name }}</h1>
         <div>
             {{ report_table | safe }}
         </div>
         <div>
             {{ corr_table | safe }}
         </div>
-        <div>
+        <div id="plots-container">
             {% for plot in plots %}
                 {{ plot | safe }}
             {% endfor %}
