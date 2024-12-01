@@ -1,6 +1,9 @@
 {
     "description": "moving average line cross",
     "signal_list": [
+        {"signal": "Cross","argument": {"n1": 1, "n2": 2}},
+        {"signal": "Cross","argument": {"n1": 1, "n2": 3}},
+        {"signal": "Cross","argument": {"n1": 2, "n2": 5}},
         {"signal": "Cross","argument": {"n1": 3, "n2": 8}},
         {"signal": "Cross","argument": {"n1": 5, "n2": 10}},
         {"signal": "Cross","argument": {"n1": 5, "n2": 15}},

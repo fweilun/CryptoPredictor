@@ -112,31 +112,6 @@ class FactorRunner:
             print(signal_results.corr())
     
 
-# def test1tafactor_by_class(fctr: Factor, rerun=True, plot=False):
-#     factor_runner = FactorRunner(target=TARGET, mode="default")
-#     signal_results = factor_runner.run1taclass(fctr, rerun=rerun, plot=plot)
-#     # train by fixed interval, setting.yml
-#     STEP = HOURS//4
-#     signal_results = signal_results.loc[start_date:end_date:STEP]
-#     test = test.loc[start_date:end_date:STEP]
-    
-#     scoring = test_factor_signal_report(signal_results=signal_results, test=test)
-#     result_class_path:str = fctr.result_class_path(target=TARGET)
-#     scoring.to_csv(os.path.join(result_class_path, "report.csv"))
-#     signal_results.corr().to_csv(os.path.join(result_class_path, "corr.csv"))
-    
-#     print("factor results:")
-#     print(scoring)
-#     print("correlation matrix:")
-#     print(signal_results.corr())
-    
-# def test1tafactor_by_name(factor_name, rerun=True, plot=False):
-#     module = importlib.import_module(f'factor.signal.{factor_name}')
-#     BaseClass: Factor = getattr(module, factor_name)
-#     test1tafactor_by_class(BaseClass, rerun=rerun, plot=plot)
-    
-
-
 
 def main():
     parser = argparse.ArgumentParser(description="Run factor tests with given parameters.")
@@ -147,22 +122,16 @@ def main():
     if args.factor_name == "all":
         _logger.info("Running tests for all factors.")
         factors_cls:List[Factor] = [
-            # factor.weilun01,
+            factor.weilun01,
             factor.weilun02,
             factor.weilun03,
             factor.weilun04,
-            # factor.weilun05,
-            # factor.weilun06,
-            # factor.weilun07,
             factor.weilunta,
-            # factor.Cross,
-            # factor.CrossRSI,
-            # factor.DPO,
             factor.FundingRate,
             factor.MarketParticipation,
             factor.Momentum,
-            # factor.Skewness,
-            # factor.Slope,
+            factor.Skewness,
+            factor.Slope,
             factor.SpotFutureSpread,
             factor.VolatilityCrossMarket,
             factor.VolumeAnomaly,

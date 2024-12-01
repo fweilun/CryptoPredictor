@@ -13,7 +13,18 @@ class Cross(Factor):
         for col in self.need: assert(col in x.columns), f"{col} not exist"
         price = x["close"]
         assert((price.size > self.n1) & (price.size > self.n2))        
-        return float((price[self.n1:].mean() - price[self.n2:].mean()) > 0)
+        cond1 = (price[self.n1:].mean() - price[self.n2:].mean()) > 0
+        cond2 = (price[self.n1-1:-1].mean() - price[self.n2-1:-1].mean()) < 0
+        if cond1 and cond2: return 1
+        if not cond1 and not cond2: return -1
+        return 0
+    
+    def GenAll(self, x:pd.DataFrame):
+        price = x["close"]
+        mean_diff = price.rolling(self.n1).mean() - price.rolling(self.n2).mean()
+        signal = ((mean_diff > 0) & (mean_diff.shift(1) < 0)).astype(int)
+        neg_signal = ((mean_diff < 0) & (mean_diff.shift(1) > 0)).astype(int)
+        return (signal - neg_signal).dropna()
     
     def __str__(self) -> str:
         return f"{self.__class__.__name__}_{self.n1}_{self.n2}"

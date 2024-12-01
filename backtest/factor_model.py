@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 from typing import List, Dict
 from sklearn.linear_model import LassoCV, LinearRegression, RidgeCV
-from backtest.test_factor import test1tafactor_by_class
+# from backtest.test_factor import test1tafactor_by_class
 from sklearn.preprocessing import StandardScaler
 from typing import List
 from config.load import load_config
@@ -284,7 +284,7 @@ class RollingFitter:
                 continue
             else:
                 print(f"running factor {fctr}")
-                test1tafactor_by_class(fctr, rerun=True, plot=True)
+                # test1tafactor_by_class(fctr, rerun=True, plot=True)
                      
         self.X = pd.concat([fctr.load_signal_output().loc[self.y.index] for fctr in factors], axis=1)
         print("%d of factor results.", len(self.X.columns))
@@ -343,22 +343,20 @@ def main():
     _, y = Loader.make_not_overlap(target=TARGET, delay=DELAY, hours=HOURS, dtype="continuous")
     
     factor_model = FactorModel(threshold=1.2, target=TARGET)
-    
     factor_model.load_factors([
         factor.weilun01,
         factor.weilun02,
         factor.weilun03,
         factor.weilun04,
-        factor.weilun05,
-        # factor.weilun06,
-        factor.weilun07,
-        # factor.weilun08,
-        # factor.weilun09,
-        factor.Cross,
-        # factor.CrossRSI
-        factor.Slope,
+        factor.weilunta,
+        factor.FundingRate,
+        # factor.MarketParticipation,
+        factor.Momentum,
         factor.Skewness,
-        
+        factor.Slope,
+        factor.SpotFutureSpread,
+        # factor.VolatilityCrossMarket,
+        factor.VolumeAnomaly,
     ])
     
     
