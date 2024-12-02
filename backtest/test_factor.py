@@ -135,6 +135,7 @@ def main():
             factor.SpotFutureSpread,
             factor.VolatilityCrossMarket,
             factor.VolumeAnomaly,
+            factor.StablecoinFlow,
         ]
         runner = FactorRunner(target=TARGET, mode="default")
         all_signals:List[Factor] = []
