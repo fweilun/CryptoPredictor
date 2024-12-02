@@ -25,7 +25,6 @@ class StablecoinFlow(Factor):
     def GenAll(self, x: pd.DataFrame):
         stable_supply = x["total_circulating_usd"].dropna()
         supply_change = stable_supply.pct_change().dropna()
-        print(supply_change)
 
         significant_increase = (supply_change > self.threshold_increase).astype(int)
         
