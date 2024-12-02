@@ -225,6 +225,25 @@ class OpenInterest(Crawler):
 
         return df
 
+class StableCoin(Crawler):
+    def __init__(self):
+        ...
+    
+    def Get(self) -> pd.DataFrame:
+        url = "https://stablecoins.llama.fi/stablecoincharts/all"
+        df = requests.get(url, params={"stablecoin": 1}).json()
+
+        df = [(i["date"], i["totalCirculatingUSD"]["peggedUSD"]) for i in df]
+        df = pd.DataFrame(df, columns=["timestamp", "totalCirculatingUSD"])
+
+        df.set_index("timestamp", inplace=True)
+        df.index = pd.to_datetime(df.index.astype(float), unit="s")
+        df.sort_index()
+
+        df["totalCirculatingUSD"] = df["totalCirculatingUSD"].astype(int)
+
+        return df
+
 def renew_data():
     start_date = "2020-01-01"
     end_date = "2025-01-01"
@@ -314,6 +333,12 @@ def renew_data():
 
         df = pd.concat([df, open_interest_df])
         df.to_csv(f"{base_path}/open-interest/{symbol.value + base}.csv")
+
+    # Stable Coin Data
+    print(f'\nStable Coin Data')
+    stable_coin = StableCoin()
+    stable_coin_df = stable_coin.Get()
+    stable_coin_df.to_csv(f"{base_path}/stable-coin/stable-coin.csv")
 
 if __name__ == "__main__":
     renew_data()
