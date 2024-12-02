@@ -1,0 +1,10 @@
+{
+    "description": "Stablecoin supply change signals.",
+    "signal_list": [
+        {"signal": "StablecoinFlow", "argument": {"threshold_increase": 0.001}},
+        {"signal": "StablecoinFlow", "argument": {"threshold_increase": 0.002}},
+        {"signal": "StablecoinFlow", "argument": {"threshold_increase": 0.003}},
+        {"signal": "StablecoinFlow", "argument": {"threshold_increase": 0.004}},
+        {"signal": "StablecoinFlow", "argument": {"threshold_increase": 0.005}}
+    ]
+}

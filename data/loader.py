@@ -10,6 +10,7 @@ SPOT_STORAGE_DIR = os.path.join(STORAGE_DIR, "spot")
 FUTURE_STORAGE_DIR = os.path.join(STORAGE_DIR, "future")
 FUNDING_RATE_DIR = os.path.join(STORAGE_DIR, "funding-rate")
 LONG_SHORT_RATIO_DIR = os.path.join(STORAGE_DIR, "long-short-ratio")
+STABLECOIN_DIR = os.path.join(STORAGE_DIR, "stablecoin")
 
 
 
@@ -120,6 +121,8 @@ class Loader:
         X["future_close"] = future_data["close"]
         X["future_volume"] = future_data["volume"]
 
+        X["total_circulating_usd"] = Loader.load_stablecoin()["totalCirculatingUSD"]
+
         # # FIXME:
         # X["long_short_ratio"] = Loader.load_long_short_ratio(symbol=target)["longShortRatio"]
         # X["long_short_ratio"] = X["long_short_ratio"].bfill()
@@ -220,6 +223,14 @@ class Loader:
         lsr_data.index = lsr_data.index.round('s')
         return lsr_data 
     
+    @classmethod
+    def load_stablecoin(cls, symbol:str="USDT"):
+        file_path = os.path.join(STABLECOIN_DIR, "stablecoin.csv")
+        sc_data = pd.read_csv(file_path)
+        sc_data = sc_data.set_index("timestamp")
+        sc_data.index = pd.to_datetime(sc_data.index)
+        return sc_data
+
     @classmethod
     def load_stock_data(cls, ticker:str="SPY"):
         return yf.download(ticker,start=cls.start_date,end=cls.end_date, interval="1h") 

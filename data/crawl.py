@@ -338,7 +338,7 @@ def renew_data():
     print(f'\nStable Coin Data')
     stable_coin = StableCoin()
     stable_coin_df = stable_coin.Get()
-    stable_coin_df.to_csv(f"{base_path}/stable-coin/stable-coin.csv")
+    stable_coin_df.to_csv(f"{base_path}/stablecoin/stablecoin.csv")
 
 if __name__ == "__main__":
     renew_data()
