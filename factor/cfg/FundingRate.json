@@ -4,6 +4,9 @@
         {"signal": "FundingRate", "argument": {"periods": [5]}},
         {"signal": "FundingRate", "argument": {"periods": [10]}},
         {"signal": "FundingRate", "argument": {"periods": [20]}},
-        {"signal": "FundingRate", "argument": {"periods": [30]}}
+        {"signal": "FundingRate", "argument": {"periods": [30]}},
+        {"signal": "FundingRate", "argument": {"periods": [50]}},
+        {"signal": "FundingRate", "argument": {"periods": [100]}},
+        {"signal": "FundingRate", "argument": {"periods": [200]}}
     ]
 }

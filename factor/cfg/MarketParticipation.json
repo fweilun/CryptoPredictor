@@ -3,6 +3,10 @@
     "signal_list": [
         {"signal": "MarketParticipation", "argument": {"periods": [5]}},
         {"signal": "MarketParticipation", "argument": {"periods": [10]}},
-        {"signal": "MarketParticipation", "argument": {"periods": [20]}}
+        {"signal": "MarketParticipation", "argument": {"periods": [20]}},
+        {"signal": "MarketParticipation", "argument": {"periods": [30]}},
+        {"signal": "MarketParticipation", "argument": {"periods": [50]}},
+        {"signal": "MarketParticipation", "argument": {"periods": [100]}},
+        {"signal": "MarketParticipation", "argument": {"periods": [200]}}
     ]
 }
