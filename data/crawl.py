@@ -246,19 +246,20 @@ class StableCoin(Crawler):
 
 def renew_data():
     start_date = "2020-01-01"
-    end_date = "2025-01-01"
+    # end_date = "2024-12-01"
+    end_date = datetime.now().strftime('%Y-%m-%d')
     base_path = "./data/storage"
     base = "USDT"
 
-    # # Base Data
-    # print(f'Spot Data:')
-    # for symbol in Symbols:
-    #     pair = symbol.value + base
-    #     print(f'Pair: {symbol.value}/{base}')
+    # Base Data
+    print(f'Spot Data:')
+    for symbol in Symbols:
+        pair = symbol.value + base
+        print(f'Pair: {symbol.value}/{base}')
 
-    #     binance_data = SpotData(symbol=pair, start_date=start_date, end_date=end_date)
-    #     base_df = binance_data.Get()
-    #     base_df.to_csv(f"{base_path}/spot/{pair}.csv")
+        binance_data = SpotData(symbol=pair, start_date=start_date, end_date=end_date)
+        base_df = binance_data.Get()
+        base_df.to_csv(f"{base_path}/spot/{pair}.csv")
 
     symbols = []
     symbols.append(Symbols.BTC)
