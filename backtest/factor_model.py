@@ -359,7 +359,7 @@ class RollingFitter:
             self.core.fit_on_features(train_x, train_y)
             pred_y = self.core.predict_on_features(test_x)
             # self.core.all_factors
-            print(self.core.temp)
+            # print(self.core.temp)
             # exit()
             # temp.append(ResultEntry(train_x[self.core.temp], train_y, test_x[self.core.temp], test_y, None).parse(FactorTest.correlation_stable, FactorTest.correlation))
             
@@ -488,7 +488,7 @@ class FactorModelPerformanceEvaluator:
 
 def main():
     _, y = Loader.make_not_overlap(target=TARGET, delay=DELAY, hours=HOURS, dtype="continuous")
-    
+    y = y[y.index > "2022-01-01"]
     factor_model = FactorModel(threshold=1.2, target=TARGET)
     factor_model.load_factors([
         factor.weilun01,
@@ -515,6 +515,7 @@ def main():
         jump=JUMP,
         target=TARGET)
     
+    # exit()
     rollingfit.load_y(y=y)
     res = rollingfit.fit()
     

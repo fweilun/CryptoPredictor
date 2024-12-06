@@ -106,7 +106,7 @@ class Loader:
             "high",
             "low"
             ]).set_index("timestamp")
-
+        
         X["funding_rate"] = Loader.load_funding_rate(symbol=target)["fundingRate"]
         X["funding_rate"] = X["funding_rate"].bfill()
         X["funding_rate_ema0.05"] = X["funding_rate"].ewm(alpha=0.05).mean()
@@ -120,8 +120,9 @@ class Loader:
         X["future_low"] = future_data["low"]
         X["future_close"] = future_data["close"]
         X["future_volume"] = future_data["volume"]
-
-        X["total_circulating_usd"] = Loader.load_stablecoin()["totalCirculatingUSD"]
+        
+        # proccess later.
+        # X["total_circulating_usd"] = Loader.load_stablecoin()["totalCirculatingUSD"]
 
         # # FIXME:
         # X["long_short_ratio"] = Loader.load_long_short_ratio(symbol=target)["longShortRatio"]
@@ -129,20 +130,27 @@ class Loader:
         
         X.index = pd.to_datetime(X.index)
         
+        match_file = 0
+        all_file = 0
         for file in os.listdir(SPOT_STORAGE_DIR):
             path = os.path.join(SPOT_STORAGE_DIR, file)
             file_df = pd.read_csv(path, usecols=["timestamp","close","volume"]).set_index("timestamp")
             file_df.index = pd.to_datetime(file_df.index)
             file_df.columns = [f"{file[:-4]}_{col}" for col in file_df.columns]
+            all_file+=1
+            # if (file_df.index.equals(X.index)):
+            match_file += 1
             X = pd.concat([X, file_df], axis=1)
-        
+                
+        print("All: %d files, with %d matches origin index." % (match_file, all_file))
         step = hours//4
         X["return"] = X["close"].pct_change(step).shift(-step)
-        X = X.dropna(axis=0)
+        # X = X.dropna(axis=0)
         y = X["return"]
+        # X.to_csv("aa.csv")
         if dtype != "backtest":
             return X, y
-    
+        
         # X should contains the last value having the same index as y 
         start_index = (len(X) - delay) % step
         end_index = len(X) - delay

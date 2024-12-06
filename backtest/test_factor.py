@@ -126,7 +126,7 @@ def main():
             factor.weilun02,
             factor.weilun03,
             factor.weilun04,
-            # factor.weilunta,
+            factor.weilunta,
             factor.FundingRate,
             factor.MarketParticipation,
             factor.Momentum,
@@ -135,7 +135,8 @@ def main():
             factor.SpotFutureSpread,
             factor.VolatilityCrossMarket,
             factor.VolumeAnomaly,
-            factor.StablecoinFlow,
+            # factor.StablecoinFlow,
+            
         ]
         runner = FactorRunner(target=TARGET, mode="default")
         all_signals:List[Factor] = []
