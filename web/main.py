@@ -51,8 +51,14 @@ def report(signal_name):
         signal_name = str(fctr)
         plots.append(f'''
             <div class="plot-container">
-                <img src="/get_distribution/{TARGET}/{fctr.__class__.__name__}/{signal_name}" class="plot-img">
-                <img src="/get_ts_plot/{TARGET}/{fctr.__class__.__name__}/{signal_name}" class="plot-img">
+                <div class="plot-item">
+                    <img src="/get_distribution/{TARGET}/{fctr.__class__.__name__}/{signal_name}" class="plot-img" title="{signal_name}">
+                    <h3>{signal_name}</h3>
+                </div>
+                <div class="plot-item">
+                    <img src="/get_ts_plot/{TARGET}/{fctr.__class__.__name__}/{signal_name}" class="plot-img" title="{signal_name}">
+                    <h3>{signal_name}</h3>
+                </div>
             </div>
         ''')
         

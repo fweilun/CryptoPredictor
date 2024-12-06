@@ -21,8 +21,8 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
             text-align: center;
-            width: 90%;
-            max-width: 1200px;
+            width: 80%;
+            margin: auto;
             min-height: 90vh;
             display: flex;
             flex-direction: column;
@@ -47,15 +47,22 @@
             display: flex;
             justify-content: space-around;
             margin-top: 20px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .plot-item {
+            text-align: center;
+            flex: 1 1 45%;
         }
         .plot-img {
-            max-width: 45%;
+            max-width: 100%;
             height: auto;
         }
         .navigation {
-            margin-top: 20px;
             display: flex;
             justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
         }
         .home-button {
             padding: 10px 20px;
@@ -64,12 +71,18 @@
             border: none;
             cursor: pointer;
             text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
         }
         .home-button:hover {
             background-color: #45a049;
         }
         .factor-dropdown {
             padding: 10px;
+        }
+        h3 {
+            margin: 0;
         }
     </style>
 </head>
