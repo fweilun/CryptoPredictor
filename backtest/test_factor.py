@@ -126,7 +126,7 @@ def main():
             factor.weilun02,
             factor.weilun03,
             factor.weilun04,
-            factor.weilunta,
+            # factor.weilunta,
             factor.FundingRate,
             factor.MarketParticipation,
             factor.Momentum,

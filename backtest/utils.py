@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics import r2_score, accuracy_score, confusion_matrix
     
+    
 
 class FactorTest:
     @classmethod
@@ -49,10 +50,19 @@ class FactorTest:
         if not np.isnan(corr).any():
             return corr[0,1]
         
-        # if (x[1:] - x[:-1]).sum() == 0:
-        #     return 0
+        if (x[1:] - x[:-1]).abs().sum() == 0:
+            return 0
         
         return pd.DataFrame([x, y]).T.dropna().corr().iloc[0,1]
+    
+    @classmethod
+    def ema_correlation(cls, signal_output, test, alpha=0.1):
+        _x = pd.Series(signal_output).ewm(alpha=alpha).mean()
+        _y = pd.Series(test).ewm(alpha=alpha).mean()
+        if (_x == 0).all():
+            # print("exist all zero signal.")
+            return 0
+        return np.corrcoef(_x, _y)[0,1]
     
     @classmethod
     def correlation_series(cls, signal_output, test, split=5):
@@ -94,6 +104,12 @@ class FactorTest:
         else:
             score = 2*negative + neutral - 4*positive
         return score
+    
+    @classmethod
+    def ema_stable(cls, signal_output, test, split=5, alpha=0.2):
+        signal_output = pd.Series(signal_output).ewm(alpha=alpha).mean()
+        test = pd.Series(test).ewm(alpha=alpha).mean()
+        return cls.correlation_stable(signal_output, test, split=split)
     
     @classmethod
     def run(cls, tests, x, y):
@@ -150,3 +166,28 @@ factor_model_signal_report = lambda signal_results, test:make_signal_report(sign
 def index_contains(index1:pd.Index, index2:pd.Index):
     index1 = index2.intersection(index1)
     return index1.equals(index2)
+
+
+
+
+    
+class ResultEntry:
+    def __init__(self, train, train_y, test, test_y, model):
+        self.train:pd.DataFrame = train
+        self.test:pd.DataFrame = test
+        self.train_y:pd.Series = train_y
+        self.test_y:pd.Series = test_y
+        self.model = model
+    
+    def parse(self, test_on_train, test_on_test):
+        result = []
+        for col in self.train.columns:
+            train_score = test_on_train(self.train[col], self.train_y)
+            test_score = test_on_test(self.test[col], self.test_y)
+            result.append((train_score, test_score))
+            
+        return pd.DataFrame(result).dropna()
+        
+        
+        
+        

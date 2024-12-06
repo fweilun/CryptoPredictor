@@ -12,7 +12,7 @@ from sklearn.preprocessing import StandardScaler
 from typing import List
 from config.load import load_config
 from backtest.test_factor import FactorRunner
-from backtest.utils import FactorTest, index_contains, factor_model_signal_report
+from backtest.utils import FactorTest, index_contains, factor_model_signal_report, make_signal_report, ResultEntry
 import loggings as log
 import talib
 # import logging
@@ -41,7 +41,133 @@ GAP = config.get("GAP")
 train_period = config.get("backtest").get("train_period")
 test_period = config.get("backtest").get("test_period")
 
+class FactorSelection:
+    max_inner_correlation = 0.8
+    @classmethod
+    def select_columns_by_correlation(cls, x:pd.DataFrame, y, threshold=0):
+        max_correlation = 0.8
+        selected_features = []
+        signal_report = make_signal_report(x, y, factor_tests=[
+            FactorTest.correlation
+        ])
+        signal_report = signal_report[["correlation"]].abs().sort_values("correlation", ascending=False)
+        
+        for index, _ in signal_report.iterrows():
+            if not selected_features:
+                selected_features.append(index)
+                continue
+            
+            if len(selected_features) == 8:
+                break
+            
+            inter_correlation = x[selected_features].corrwith(x[index])
+            if all(abs(corr) <= max_correlation for corr in inter_correlation):
+                selected_features.append(index)
+        
+        return selected_features
+    
+    @classmethod
+    def select_columns_by_ema_correlation(cls, x:pd.DataFrame, y, threshold=0):
+        max_correlation = 0.8
+        selected_features = []
+        signal_report = make_signal_report(x, y, factor_tests=[
+            FactorTest.ema_correlation
+        ])
+        signal_report = signal_report[["ema_correlation"]].abs().sort_values("ema_correlation", ascending=False)
+        
+        for index, _ in signal_report.iterrows():
+            if not selected_features:
+                selected_features.append(index)
+                continue
+            
+            if len(selected_features) == 8:
+                break
+            
+            inter_correlation = x[selected_features].corrwith(x[index])
+            if all(abs(corr) <= max_correlation for corr in inter_correlation):
+                selected_features.append(index)
+        
+        return selected_features
+    
+    @classmethod
+    def select_columns_by_stable(cls, x:pd.DataFrame, y, threshold=0):
+        max_correlation = 0.8
+        selected_features = []
+        signal_report = factor_model_signal_report(x, y)
+        '''
+        select conditions
+        1. with higher score
+        2. correlation filter
+        '''
+        signal_report = signal_report.abs().sort_values("correlation_stable", ascending=False)
+        for index, _ in signal_report[["correlation", "correlation_stable"]].iterrows():
+            # if row["correlation_stable"] < threshold or abs(row["correlation"]) < 0.03:
+            #     break
+            if not selected_features:
+                selected_features.append(index)
+                continue
+            
+            if len(selected_features) == 8:
+                break
+            
+            correlations = x[selected_features].corrwith(x[index])
+            if all(abs(corr) <= max_correlation for corr in correlations):
+                # print(f"Signal: {index:<20} corr: {row['correlation']} stable:{row['correlation_stable']}")
+                selected_features.append(index)
+                
+        return selected_features
+    
+    @classmethod
+    def select_columns_by_winrate(cls, x:pd.DataFrame, y, threshold=0):
+        max_correlation = 0.8
+        selected_features = []
+        signal_report = make_signal_report(x, y, factor_tests=[
+            FactorTest.accuracy
+        ])
+        signal_report = signal_report[["accuracy"]].abs().sort_values("accuracy", ascending=False)
+        
+        for index, _ in signal_report.iterrows():
+            if not selected_features:
+                selected_features.append(index)
+                continue
+            
+            if len(selected_features) == 8:
+                break
+            
+            inter_correlation = x[selected_features].corrwith(x[index])
+            if all(abs(corr) <= max_correlation for corr in inter_correlation):
+                selected_features.append(index)
+        
+        return selected_features
+    
+    @classmethod
+    def select_columns_by_ema_stable(cls, x:pd.DataFrame, y, threshold=0):
+        selected_features = []
+        signal_report = make_signal_report(x, y, factor_tests=[
+            FactorTest.ema_stable
+        ])
+        signal_report = signal_report[["ema_stable"]].sort_values("ema_stable", ascending=False)
+        
+        for index, _ in signal_report.iterrows():
+            if not selected_features:
+                selected_features.append(index)
+                continue
+            
+            if len(selected_features) == 8:
+                break
+            
+            inter_correlation = x[selected_features].corrwith(x[index])
+            if all(abs(corr) <= cls.max_inner_correlation for corr in inter_correlation):
+                selected_features.append(index)
+        
+        return selected_features
+    
 
+    @classmethod
+    def GetSelection(cls):
+        return cls.select_columns_by_stable
+    
+    
 
 class FactorModel:
     '''
@@ -104,7 +230,8 @@ class FactorModel:
         
         # feature selection
         if self.__debug: print("select columns")
-        selected_col = self.__select_columns(x_train, y, self.threshold)
+        # selected_col = self.__select_columns(x_train, y, self.threshold)
+        selected_col = FactorSelection.GetSelection(x_train, y, self.threshold)
         x_train = x_train.loc[:, selected_col]
         
         # scalar
@@ -119,11 +246,13 @@ class FactorModel:
         self.__signal_order = self.__scalar.feature_names_in_
         self.__factors = [fctr for fctr in self.all_factors if str(fctr) in self.__signal_order]
         self.weights_dict = dict(zip(self.__factors, model.coef_))
+        self.temp = None
         
     def fit_on_features(self, x_train, y):
         # feature selection
         if self.__debug: print("select columns")
-        selected_col = self.__select_columns(x_train, y, self.threshold)
+        # selected_col = self.__select_columns(x_train, y, self.threshold)
+        selected_col = FactorSelection.GetSelection()(x_train, y, self.threshold)
             
         x_train = x_train.loc[:, selected_col]
         
@@ -131,13 +260,15 @@ class FactorModel:
         if self.__debug: print("fit transformation")
         x_train = self.__scalar.fit_transform(x_train)
         
-        model = LassoCV(cv=5)
+        model = RidgeCV(cv=5)
         model.fit(x_train, y)
         
         self.__model = model
         self.__signal_order = self.__scalar.feature_names_in_
         self.__factors = [fctr for fctr in self.all_factors if str(fctr) in self.__signal_order]
         self.weights_dict = dict(zip(self.__factors, model.coef_))
+        self.temp = selected_col
+        
     
     def predict(self, x_test):
         all_factor_values = []
@@ -151,45 +282,9 @@ class FactorModel:
     
     def predict_on_features(self, x_train):
         if self.__debug: print("fetch cached data.")
-        # print(x_train)
-        # print(self.__signal_order)
-        # exit()
         factor_df_scaled = self.__scalar.transform(x_train[self.__signal_order])
         if self.__debug: print("matrix multiplication.")
         return self.__model.predict(factor_df_scaled)
-    
-    def __select_columns(self, x:pd.DataFrame, y, threshold=0):
-        max_correlation = 0.8
-        selected_features = []
-        signal_report = factor_model_signal_report(x, y)
-        '''
-        select conditions
-        1. with higher score
-        2. correlation filter
-        '''
-        signal_report = signal_report.sort_values("correlation_stable", ascending=False)
-        
-        for index, row in signal_report[["correlation", "correlation_stable"]].iterrows():
-            if row["correlation_stable"] < threshold or abs(row["correlation"]) < 0.03:
-                break
-            
-            if not selected_features:
-                # print(f"Signal: {index:<20} corr: {row['correlation']} stable:{row['correlation_stable']}")
-                selected_features.append(index)
-                continue
-            
-            correlations = x[selected_features].corrwith(x[index])
-            if all(abs(corr) <= max_correlation for corr in correlations):
-                # print(f"Signal: {index:<20} corr: {row['correlation']} stable:{row['correlation_stable']}")
-                selected_features.append(index)
-        
-        if len(selected_features) == 0:
-            selected_features = signal_report[signal_report["correlation"] > 0.01]
-            # if len(selected_features) == 0:
-                # return signal_report.index[0]
-            return [selected_features.sort_values("correlation_stable", ascending=False).index[0]]
-            
-        return selected_features
     
     def __make_signal_output(self, X, index):
         packing = tqdm(self.all_factors, desc='factors') if self.__show else self.all_factors
@@ -205,6 +300,7 @@ class FactorModel:
         if x_train.isna().values.any():
             print("Warning: NaN values detected in training data.")
         return x_train.dropna()
+
 
 
 class RollingFitter:
@@ -231,6 +327,7 @@ class RollingFitter:
         pred_record = []
         test_record = []
         weights_record = []
+        temp = []
         for start in range(0, n - self.train_period - self.test_period, self.jump):
             end = start + self.train_period
             
@@ -261,6 +358,10 @@ class RollingFitter:
             
             self.core.fit_on_features(train_x, train_y)
             pred_y = self.core.predict_on_features(test_x)
+            # self.core.all_factors
+            print(self.core.temp)
+            # exit()
+            # temp.append(ResultEntry(train_x[self.core.temp], train_y, test_x[self.core.temp], test_y, None).parse(FactorTest.correlation_stable, FactorTest.correlation))
             
             pred_record.append(pd.Series(pred_y, index=test_y.index))
             test_record.append(test_y)
@@ -273,6 +374,7 @@ class RollingFitter:
             "pred_record": pred_record,
             "test_record": test_record,
             "weights_record": weights_record,
+            "temp":temp
         }
         
     def __load_factor_result(self):
@@ -295,7 +397,6 @@ class RollingFitter:
         print("remove na, start time:", first_valid_index)
         self.X = self.X.loc[first_valid_index:]
         self.y = self.y.loc[first_valid_index:]
-        
 
 
 class FactorModelPerformanceEvaluator:
@@ -304,10 +405,13 @@ class FactorModelPerformanceEvaluator:
         self.pred_record = self.ts_result["pred_record"]
         self.test_record = self.ts_result["test_record"]
         self.weights_record = self.ts_result["weights_record"]
+        self.temp = self.ts_result["temp"]
     
     def mock_trade(self):
         pred = pd.concat(self.pred_record, axis=0)
         y = pd.concat(self.test_record, axis=0)
+        pred.to_csv("temp_pred.csv")
+        y.to_csv("temp_y.csv")
         signal = (pred > 0).astype(int)
         # result = (1 + y.loc[signal.index] * signal).cumprod()
         # result2 = (1 + y.loc[signal.index]).cumprod()
@@ -320,11 +424,14 @@ class FactorModelPerformanceEvaluator:
         result = (1 + returns1).cumprod()
         result2 = (1 + returns2).cumprod()
         
-        sharpe1 = (returns1.mean()/returns1.std())
-        sharpe2 = (returns2.mean()/returns2.std())
+        sharpe = lambda mean, std:mean/std * (252*24/HOURS)**0.5
+        sharpe1 = sharpe(returns1.mean(), returns1.std())
+        sharpe2 = sharpe(returns2.mean(), returns2.std())
+        
         print(sharpe1, sharpe2)
-        print(returns1.mean(), returns1.std(), result[-1] / returns1.std())
-        print(returns2.mean(), returns2.std(), result2[-1] / returns2.std())
+        
+        print(returns1.mean(), returns1.std())
+        print(returns2.mean(), returns2.std())
         
         print(FactorTest.accuracy(signal, y.loc[signal.index]))
         print(FactorTest.correlation(signal, y.loc[signal.index]))
@@ -332,6 +439,46 @@ class FactorModelPerformanceEvaluator:
         plt.plot(result2, label="B&H")
         plt.legend()
         plt.show()
+    
+    def scoring(self):
+        result = self.ts_result["temp"]
+        result = pd.concat(result)
+        print(result.corr())
+        plt.scatter(x=result[result.columns[0]], y=result[result.columns[1]])
+        plt.show()
+        pass
+    
+        
+    
+    def perform_maxtrix(self):
+        def winrate(dir_diff):
+            return (dir_diff==0).astype(int).mean()
+        def returns(x):
+            return (1+x).prod()
+        def sharpe(x):
+            return (x.mean()/x.std())*((252*24/HOURS)**0.5)
+        def holdrate(x):
+            return (x>0).astype(int).mean()
+                
+        pred = pd.concat(self.pred_record, axis=0)
+        y = pd.concat(self.test_record, axis=0)
+        
+        dir_diff = (pred>0).astype(int) - (y>0).astype(int)
+        strat = y * (pred>0).astype(int)
+        
+        print("strategy perform matrix:")
+        print(strat.groupby(strat.index.year).agg([returns, sharpe, holdrate]))
+        print("B&H perform matrix:")
+        print(y.groupby(y.index.year).agg([returns, sharpe, holdrate]))
+        print("strategy win rate:")
+        print(dir_diff.groupby(dir_diff.index.year).apply(winrate))
+        
+        
+        
+        
+        
+        
+    
     
         
         
@@ -355,7 +502,7 @@ def main():
         factor.Skewness,
         factor.Slope,
         factor.SpotFutureSpread,
-        # factor.VolatilityCrossMarket,
+        factor.VolatilityCrossMarket,
         factor.VolumeAnomaly,
     ])
     
@@ -373,7 +520,10 @@ def main():
     
     evaluator = FactorModelPerformanceEvaluator(res)
     evaluator.mock_trade()
+    evaluator.perform_maxtrix()
+    # evaluator.scoring()
 
 
 if __name__ == "__main__":
     main()
+
