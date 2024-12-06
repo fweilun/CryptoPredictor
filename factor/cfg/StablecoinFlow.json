@@ -1,10 +1,25 @@
 {
     "description": "Stablecoin supply change signals.",
     "signal_list": [
+        {"signal": "StablecoinFlow", "argument": {"threshold_increase": 0.0005}},
         {"signal": "StablecoinFlow", "argument": {"threshold_increase": 0.001}},
+        {"signal": "StablecoinFlow", "argument": {"threshold_increase": 0.0015}},
         {"signal": "StablecoinFlow", "argument": {"threshold_increase": 0.002}},
+        {"signal": "StablecoinFlow", "argument": {"threshold_increase": 0.0025}},
         {"signal": "StablecoinFlow", "argument": {"threshold_increase": 0.003}},
+        {"signal": "StablecoinFlow", "argument": {"threshold_increase": 0.0035}},
         {"signal": "StablecoinFlow", "argument": {"threshold_increase": 0.004}},
-        {"signal": "StablecoinFlow", "argument": {"threshold_increase": 0.005}}
+        {"signal": "StablecoinFlow", "argument": {"threshold_increase": 0.0045}},
+        {"signal": "StablecoinFlow", "argument": {"threshold_increase": 0.005}},
+        {"signal": "StablecoinFlow", "argument": {"threshold_increase": 0.0055}},
+        {"signal": "StablecoinFlow", "argument": {"threshold_increase": 0.006}},
+        {"signal": "StablecoinFlow", "argument": {"threshold_increase": 0.0065}},
+        {"signal": "StablecoinFlow", "argument": {"threshold_increase": 0.007}},
+        {"signal": "StablecoinFlow", "argument": {"threshold_increase": 0.0075}},
+        {"signal": "StablecoinFlow", "argument": {"threshold_increase": 0.008}},
+        {"signal": "StablecoinFlow", "argument": {"threshold_increase": 0.0085}},
+        {"signal": "StablecoinFlow", "argument": {"threshold_increase": 0.009}},
+        {"signal": "StablecoinFlow", "argument": {"threshold_increase": 0.0095}},
+        {"signal": "StablecoinFlow", "argument": {"threshold_increase": 0.01}}
     ]
 }
