@@ -1,0 +1,33 @@
+{
+    "description": "funding rate with DPO",
+    "signal_list": [
+        {"signal": "FundingRatewithDPO", "argument": {"periods": [5],"dpo_n": 20,"displacement": 5}},
+        {"signal": "FundingRatewithDPO", "argument": {"periods": [5],"dpo_n": 20,"displacement": 10}},
+        {"signal": "FundingRatewithDPO", "argument": {"periods": [5],"dpo_n": 30,"displacement": 5}},
+        {"signal": "FundingRatewithDPO", "argument": {"periods": [5],"dpo_n": 30,"displacement": 10}},
+        {"signal": "FundingRatewithDPO", "argument": {"periods": [5],"dpo_n": 30,"displacement": 20}},
+        {"signal": "FundingRatewithDPO", "argument": {"periods": [5],"dpo_n": 50,"displacement": 10}},
+        {"signal": "FundingRatewithDPO", "argument": {"periods": [5],"dpo_n": 50,"displacement": 20}},
+        {"signal": "FundingRatewithDPO", "argument": {"periods": [5],"dpo_n": 50,"displacement": 30}},
+        {"signal": "FundingRatewithDPO", "argument": {"periods": [5],"dpo_n": 50,"displacement": 40}},
+        {"signal": "FundingRatewithDPO", "argument": {"periods": [10],"dpo_n": 20,"displacement": 5}},
+        {"signal": "FundingRatewithDPO", "argument": {"periods": [10],"dpo_n": 20,"displacement": 10}},
+        {"signal": "FundingRatewithDPO", "argument": {"periods": [10],"dpo_n": 30,"displacement": 5}},
+        {"signal": "FundingRatewithDPO", "argument": {"periods": [10],"dpo_n": 30,"displacement": 10}},
+        {"signal": "FundingRatewithDPO", "argument": {"periods": [10],"dpo_n": 30,"displacement": 20}},
+        {"signal": "FundingRatewithDPO", "argument": {"periods": [10],"dpo_n": 50,"displacement": 10}},
+        {"signal": "FundingRatewithDPO", "argument": {"periods": [10],"dpo_n": 50,"displacement": 20}},
+        {"signal": "FundingRatewithDPO", "argument": {"periods": [10],"dpo_n": 50,"displacement": 30}},
+        {"signal": "FundingRatewithDPO", "argument": {"periods": [10],"dpo_n": 50,"displacement": 40}},
+        {"signal": "FundingRatewithDPO", "argument": {"periods": [20],"dpo_n": 20,"displacement": 5}},
+        {"signal": "FundingRatewithDPO", "argument": {"periods": [20],"dpo_n": 20,"displacement": 10}},
+        {"signal": "FundingRatewithDPO", "argument": {"periods": [20],"dpo_n": 30,"displacement": 5}},
+        {"signal": "FundingRatewithDPO", "argument": {"periods": [20],"dpo_n": 30,"displacement": 10}},
+        {"signal": "FundingRatewithDPO", "argument": {"periods": [20],"dpo_n": 30,"displacement": 20}},
+        {"signal": "FundingRatewithDPO", "argument": {"periods": [20],"dpo_n": 50,"displacement": 10}},
+        {"signal": "FundingRatewithDPO", "argument": {"periods": [20],"dpo_n": 50,"displacement": 20}},
+        {"signal": "FundingRatewithDPO", "argument": {"periods": [20],"dpo_n": 50,"displacement": 30}},
+        {"signal": "FundingRatewithDPO", "argument": {"periods": [20],"dpo_n": 50,"displacement": 40}}
+
+    ]
+}

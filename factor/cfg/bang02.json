@@ -1,0 +1,19 @@
+{
+    "description": "funding rate with Cross",
+    "signal_list": [
+        {"signal": "FundingRatewithCross", "argument": {"short_window": 5,"long_window": 10}},
+        {"signal": "FundingRatewithCross", "argument": {"short_window": 5,"long_window": 20}},
+        {"signal": "FundingRatewithCross", "argument": {"short_window": 5,"long_window": 30}},
+        {"signal": "FundingRatewithCross", "argument": {"short_window": 5,"long_window": 40}},
+        {"signal": "FundingRatewithCross", "argument": {"short_window": 10,"long_window": 15}},
+        {"signal": "FundingRatewithCross", "argument": {"short_window": 10,"long_window": 20}},
+        {"signal": "FundingRatewithCross", "argument": {"short_window": 10,"long_window": 30}},
+        {"signal": "FundingRatewithCross", "argument": {"short_window": 10,"long_window": 40}},
+        {"signal": "FundingRatewithCross", "argument": {"short_window": 10,"long_window": 50}},
+        {"signal": "FundingRatewithCross", "argument": {"short_window": 20,"long_window": 25}},
+        {"signal": "FundingRatewithCross", "argument": {"short_window": 20,"long_window": 30}},
+        {"signal": "FundingRatewithCross", "argument": {"short_window": 20,"long_window": 40}},
+        {"signal": "FundingRatewithCross", "argument": {"short_window": 20,"long_window": 45}},
+        {"signal": "FundingRatewithCross", "argument": {"short_window": 20,"long_window": 50}}
+    ]
+}
