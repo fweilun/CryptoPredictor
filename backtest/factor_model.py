@@ -164,7 +164,7 @@ class FactorSelection:
 
     @classmethod
     def GetSelection(cls):
-        return cls.select_columns_by_correlation
+        return cls.select_columns_by_stable
     
     
 
