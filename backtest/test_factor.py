@@ -5,9 +5,9 @@ from config.load import load_config
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import importlib, tqdm, factor, argparse, os
+import importlib, factor, argparse, os
 import loggings as log
-from backtest.utils import FactorTest, test_factor_signal_report
+from backtest.utils import test_factor_signal_report
 from typing import List
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)

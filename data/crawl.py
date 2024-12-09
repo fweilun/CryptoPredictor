@@ -244,6 +244,21 @@ class StableCoin(Crawler):
 
         return df
 
+class FearGreedIndex(Crawler):
+    def __init__(self):
+        ...
+    
+    def Get(self) -> pd.DataFrame:
+        url = "https://api.alternative.me/fng/"
+        df = requests.get(url, params={"limit": 0}).json()
+        df = pd.DataFrame(df["data"])
+        df.drop(columns=["time_until_update"], inplace=True)
+        df.set_index("timestamp", inplace=True)
+        df.index = pd.to_datetime(df.index.astype(float), unit="s")
+        df.sort_index()
+        df["value"] = df["value"].astype(int)
+        return df
+    
 def renew_data():
     start_date = "2020-01-01"
     # end_date = "2024-12-01"
@@ -253,13 +268,22 @@ def renew_data():
 
     # Base Data
     print(f'Spot Data:')
+    binance_data = SpotData(symbol=Symbols.BTC.value + base, start_date=start_date, end_date=end_date)
+    match_index = binance_data.Get().index
+    
     for symbol in Symbols:
         pair = symbol.value + base
         print(f'Pair: {symbol.value}/{base}')
 
         binance_data = SpotData(symbol=pair, start_date=start_date, end_date=end_date)
         base_df = binance_data.Get()
+        if (not base_df.index.equals(match_index)):
+            print("%s does not have enough data." % (pair))
+            continue
         base_df.to_csv(f"{base_path}/spot/{pair}.csv")
+        
+    exit()
+    
 
     symbols = []
     symbols.append(Symbols.BTC)
@@ -335,6 +359,12 @@ def renew_data():
         df = pd.concat([df, open_interest_df])
         df.to_csv(f"{base_path}/open-interest/{symbol.value + base}.csv")
 
+    # Fear & Greed Index Data
+    print(f'\nFear & Greed Index Data')
+    fear_greed_index = FearGreedIndex()
+    fear_greed_index_df = fear_greed_index.Get()
+    fear_greed_index_df.to_csv(f"{base_path}/fear-greed-index/fear-greed-index.csv")
+    
     # Stable Coin Data
     print(f'\nStable Coin Data')
     stable_coin = StableCoin()

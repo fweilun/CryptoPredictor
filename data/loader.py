@@ -11,6 +11,7 @@ FUTURE_STORAGE_DIR = os.path.join(STORAGE_DIR, "future")
 FUNDING_RATE_DIR = os.path.join(STORAGE_DIR, "funding-rate")
 LONG_SHORT_RATIO_DIR = os.path.join(STORAGE_DIR, "long-short-ratio")
 STABLECOIN_DIR = os.path.join(STORAGE_DIR, "stablecoin")
+FEAR_GREED_INDEX_DIR = os.path.join(STORAGE_DIR, "fear-greed-index")
 
 
 
@@ -122,8 +123,11 @@ class Loader:
         X["future_volume"] = future_data["volume"]
         
         # proccess later.
-        # X["total_circulating_usd"] = Loader.load_stablecoin()["totalCirculatingUSD"]
-
+        X["total_circulating_usd"] = Loader.load_stablecoin()["totalCirculatingUSD"]
+        X["fear_greed_index"] = Loader.load_fear_greed_index()["value"]
+        X["fear_greed_index"] = X["fear_greed_index"].ffill()
+        X["total_circulating_usd"] = X["total_circulating_usd"].ffill()
+        
         # # FIXME:
         # X["long_short_ratio"] = Loader.load_long_short_ratio(symbol=target)["longShortRatio"]
         # X["long_short_ratio"] = X["long_short_ratio"].bfill()
@@ -137,15 +141,20 @@ class Loader:
             file_df = pd.read_csv(path, usecols=["timestamp","close","volume"]).set_index("timestamp")
             file_df.index = pd.to_datetime(file_df.index)
             file_df.columns = [f"{file[:-4]}_{col}" for col in file_df.columns]
-            all_file+=1
-            # if (file_df.index.equals(X.index)):
-            match_file += 1
+            # all_file+=1
+            # print(len(file_df.index), len(X.index))
             X = pd.concat([X, file_df], axis=1)
-                
+            # if (file_df.index.equals(X.index)):
+                # match_file += 1
+                # X = pd.concat([X, file_df], axis=1)
+            # else:
+                # print(file)
+        # X.to_csv("aa.csv")
         print("All: %d files, with %d matches origin index." % (match_file, all_file))
         step = hours//4
         X["return"] = X["close"].pct_change(step).shift(-step)
-        # X = X.dropna(axis=0)
+        X = X.dropna(axis=0)
+        
         y = X["return"]
         # X.to_csv("aa.csv")
         if dtype != "backtest":
@@ -232,12 +241,20 @@ class Loader:
         return lsr_data 
     
     @classmethod
-    def load_stablecoin(cls, symbol:str="USDT"):
+    def load_stablecoin(cls):
         file_path = os.path.join(STABLECOIN_DIR, "stablecoin.csv")
         sc_data = pd.read_csv(file_path)
         sc_data = sc_data.set_index("timestamp")
         sc_data.index = pd.to_datetime(sc_data.index)
         return sc_data
+    
+    @classmethod
+    def load_fear_greed_index(cls):
+        file_path = os.path.join(FEAR_GREED_INDEX_DIR, "fear-greed-index.csv")
+        fgi_data = pd.read_csv(file_path)
+        fgi_data = fgi_data.set_index("timestamp")
+        fgi_data.index = pd.to_datetime(fgi_data.index)
+        return fgi_data
 
     @classmethod
     def load_stock_data(cls, ticker:str="SPY"):

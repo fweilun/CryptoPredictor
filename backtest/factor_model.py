@@ -104,7 +104,7 @@ class FactorSelection:
         2. correlation filter
         '''
         signal_report = signal_report.sort_values("correlation_stable", ascending=False)
-        for index, _ in signal_report[["correlation", "correlation_stable"]].iterrows():
+        for index, row in signal_report[["correlation", "correlation_stable"]].iterrows():
             if not selected_features:
                 selected_features.append(index)
                 continue
@@ -164,7 +164,7 @@ class FactorSelection:
 
     @classmethod
     def GetSelection(cls):
-        return cls.select_columns_by_stable
+        return cls.select_columns_by_correlation
     
     
 
@@ -229,7 +229,6 @@ class FactorModel:
         
         # feature selection
         if self.__debug: print("select columns")
-        # selected_col = self.__select_columns(x_train, y, self.threshold)
         selected_col = FactorSelection.GetSelection(x_train, y, self.threshold)
         x_train = x_train.loc[:, selected_col]
         
@@ -237,7 +236,7 @@ class FactorModel:
         if self.__debug: print("fit transformation")
         x_train = self.__scalar.fit_transform(x_train)
         
-        model = LassoCV(cv=5)
+        model = RidgeCV(cv=5)
         model.fit(x_train, y)
         
         
@@ -261,16 +260,6 @@ class FactorModel:
         
         model = RidgeCV(cv=5)
         model.fit(x_train, y)
-        # plt.bar(x=self.__scalar.feature_names_in_, height=model.coef_)
-        # plt.xlabel("factor name")
-        # plt.ylabel("weights")
-        # # plt.plot()
-        # plt.xticks(fontsize=8, rotation=30)
-        # plt.tight_layout()
-        # plt.show()
-        # exit()
-        # print(x_train)
-        # exit()
         self.__model = model
         self.__signal_order = self.__scalar.feature_names_in_
         self.__factors = [fctr for fctr in self.all_factors if str(fctr) in self.__signal_order]
@@ -418,16 +407,10 @@ class FactorModelPerformanceEvaluator:
     def mock_trade(self):
         pred = pd.concat(self.pred_record, axis=0)
         y = pd.concat(self.test_record, axis=0)
-        # pred.to_csv("temp_pred.csv")
-        # y.to_csv("temp_y.csv")
         signal = (pred > 0).astype(int)
-        # result = (1 + y.loc[signal.index] * signal).cumprod()
-        # result2 = (1 + y.loc[signal.index]).cumprod()
         
         returns1 = y.loc[signal.index] * signal
         returns2 = y.loc[signal.index]
-        # returns1 = returns1[::18]
-        # returns2 = returns2[::18]
         
         result = (1 + returns1).cumprod()
         result2 = (1 + returns2).cumprod()
@@ -436,16 +419,13 @@ class FactorModelPerformanceEvaluator:
         sharpe1 = sharpe(returns1.mean(), returns1.std())
         sharpe2 = sharpe(returns2.mean(), returns2.std())
         
-        print(sharpe1, sharpe2)
-        
-        print(returns1.mean(), returns1.std())
-        print(returns2.mean(), returns2.std())
-        
-        print(FactorTest.accuracy(signal, y.loc[signal.index]))
-        print(FactorTest.correlation(signal, y.loc[signal.index]))
+        print("sharpe:",sharpe1,"B&H sharpe:", sharpe2)
+        print("accuracy: ", FactorTest.accuracy(signal, y.loc[signal.index]))
+        print("correlation: ", FactorTest.correlation(signal, y.loc[signal.index]))
         plt.plot(result, label="strategy")
         plt.plot(result2, label="B&H")
         plt.legend()
+        plt.grid(axis='x')
         plt.show()
     
     def scoring(self):
@@ -454,8 +434,6 @@ class FactorModelPerformanceEvaluator:
         print(result.corr())
         plt.scatter(x=result[result.columns[0]], y=result[result.columns[1]])
         plt.show()
-        pass
-    
         
     
     def perform_maxtrix(self):
@@ -508,12 +486,13 @@ def main():
         factor.bang01,
         factor.bang02,
         factor.bang03,
-        factor.DPO,
+        # factor.DPO,
         factor.weilun04,
         factor.Momentum2,
         factor.VwapSignal,
         # factor.weilunta,
         factor.FundingRate,
+        factor.StablecoinFlow,
         # factor.MarketParticipation,
         factor.Momentum,
         factor.Skewness,

@@ -1,4 +1,4 @@
-TARGET: 'BTCUSDT'
+TARGET: 'ETHUSDT'
 DELAY: 1000
 HOURS: 72
 JUMP: 100
@@ -6,11 +6,11 @@ GAP: 18 # HOURS/4
 
 backtest:
   start_date: '2021-05-01'
-  end_date: '2024-10-01'
+  end_date: '2024-08-01'
   train_period: 500
   test_period: 100
   
 
 test_factor:
   start_date: '2021-05-01'
-  end_date: '2024-10-01'
+  end_date: '2024-08-01'
