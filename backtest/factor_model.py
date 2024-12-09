@@ -41,6 +41,9 @@ GAP = config.get("GAP")
 train_period = config.get("backtest").get("train_period")
 test_period = config.get("backtest").get("test_period")
 
+start_date = config.get("backtest").get("start_date")
+end_date = config.get("backtest").get("end_date")
+
 class FactorSelection:
     max_inner_correlation = 0.8
     @classmethod
@@ -91,7 +94,8 @@ class FactorSelection:
     
     @classmethod
     def select_columns_by_stable(cls, x:pd.DataFrame, y, threshold=0):
-        max_correlation = 0.8
+        max_correlation = 0.7
+        threshold = 1.2
         selected_features = []
         signal_report = factor_model_signal_report(x, y)
         '''
@@ -99,21 +103,16 @@ class FactorSelection:
         1. with higher score
         2. correlation filter
         '''
-        signal_report = signal_report.abs().sort_values("correlation_stable", ascending=False)
+        signal_report = signal_report.sort_values("correlation_stable", ascending=False)
         for index, _ in signal_report[["correlation", "correlation_stable"]].iterrows():
-            # if row["correlation_stable"] < threshold or abs(row["correlation"]) < 0.03:
-            #     break
             if not selected_features:
                 selected_features.append(index)
                 continue
             
-            if len(selected_features) == 8:
-                break
-            
             correlations = x[selected_features].corrwith(x[index])
             if all(abs(corr) <= max_correlation for corr in correlations):
-                # print(f"Signal: {index:<20} corr: {row['correlation']} stable:{row['correlation_stable']}")
-                selected_features.append(index)
+                if len(selected_features) < 10:
+                    selected_features.append(index)
                 
         return selected_features
     
@@ -238,7 +237,7 @@ class FactorModel:
         if self.__debug: print("fit transformation")
         x_train = self.__scalar.fit_transform(x_train)
         
-        model = RidgeCV(cv=5)
+        model = LassoCV(cv=5)
         model.fit(x_train, y)
         
         
@@ -262,7 +261,16 @@ class FactorModel:
         
         model = RidgeCV(cv=5)
         model.fit(x_train, y)
-        
+        # plt.bar(x=self.__scalar.feature_names_in_, height=model.coef_)
+        # plt.xlabel("factor name")
+        # plt.ylabel("weights")
+        # # plt.plot()
+        # plt.xticks(fontsize=8, rotation=30)
+        # plt.tight_layout()
+        # plt.show()
+        # exit()
+        # print(x_train)
+        # exit()
         self.__model = model
         self.__signal_order = self.__scalar.feature_names_in_
         self.__factors = [fctr for fctr in self.all_factors if str(fctr) in self.__signal_order]
@@ -361,7 +369,7 @@ class RollingFitter:
             # self.core.all_factors
             # print(self.core.temp)
             # exit()
-            # temp.append(ResultEntry(train_x[self.core.temp], train_y, test_x[self.core.temp], test_y, None).parse(FactorTest.correlation_stable, FactorTest.correlation))
+            # temp.append(ResultEntry(train_x[self.core.temp], train_y, test_x[self.core.temp], test_y, None).parse(FactorTest.correlation_stable, FactorTest.correlation)) 
             
             pred_record.append(pd.Series(pred_y, index=test_y.index))
             test_record.append(test_y)
@@ -410,8 +418,8 @@ class FactorModelPerformanceEvaluator:
     def mock_trade(self):
         pred = pd.concat(self.pred_record, axis=0)
         y = pd.concat(self.test_record, axis=0)
-        pred.to_csv("temp_pred.csv")
-        y.to_csv("temp_y.csv")
+        # pred.to_csv("temp_pred.csv")
+        # y.to_csv("temp_y.csv")
         signal = (pred > 0).astype(int)
         # result = (1 + y.loc[signal.index] * signal).cumprod()
         # result2 = (1 + y.loc[signal.index]).cumprod()
@@ -488,21 +496,30 @@ class FactorModelPerformanceEvaluator:
 
 def main():
     _, y = Loader.make_not_overlap(target=TARGET, delay=DELAY, hours=HOURS, dtype="continuous")
-    y = y[y.index > "2022-01-01"]
+    y = y[start_date:end_date]
+    # print(y)
+    # exit()
     factor_model = FactorModel(threshold=1.2, target=TARGET)
     factor_model.load_factors([
+        factor.Cross,
         factor.weilun01,
         factor.weilun02,
         factor.weilun03,
+        factor.bang01,
+        factor.bang02,
+        factor.bang03,
+        factor.DPO,
         factor.weilun04,
-        factor.weilunta,
+        factor.Momentum2,
+        factor.VwapSignal,
+        # factor.weilunta,
         factor.FundingRate,
         # factor.MarketParticipation,
         factor.Momentum,
         factor.Skewness,
         factor.Slope,
         factor.SpotFutureSpread,
-        factor.VolatilityCrossMarket,
+        # factor.VolatilityCrossMarket,
         factor.VolumeAnomaly,
     ])
     

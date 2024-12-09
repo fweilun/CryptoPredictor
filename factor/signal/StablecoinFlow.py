@@ -14,7 +14,7 @@ class StablecoinFlow(Factor):
         stable_supply = x["total_circulating_usd"].dropna()
         assert(stable_supply.size > 1), "Not enough data to compute signals."
 
-        supply_change = stable_supply.pct_change().dropna()
+        supply_change = stable_supply.pct_change(6).dropna()
 
         significant_increase = supply_change.iloc[-1] > self.threshold_increase
 
@@ -24,7 +24,7 @@ class StablecoinFlow(Factor):
 
     def GenAll(self, x: pd.DataFrame):
         stable_supply = x["total_circulating_usd"].dropna()
-        supply_change = stable_supply.pct_change().dropna()
+        supply_change = stable_supply.pct_change(6)
 
         signals = supply_change.apply(lambda change: 1 if change > self.threshold_increase else (-1 if change < -self.threshold_increase else 0))
         

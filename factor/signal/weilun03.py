@@ -19,10 +19,13 @@ class weilun03(Factor):
         return sum(returns > coin_returns) / len(coin_returns)
     
     def GenAll(self, x:pd.DataFrame):
+        # returns = np.log(price) - np.log(price.shift(self.n))
         coin_close = x[x.columns[x.columns.str.contains("close")]]
         coin_returns = np.log(coin_close) - np.log(coin_close.shift(self.n))
         coin_returns["returns"] = coin_returns["close"]
-        return coin_returns.rank(axis=1)["returns"].rolling(window=5).mean()
+        # print(coin_returns)
+        mean = len(coin_close.columns)/2
+        return (coin_returns.rank(axis=1)["returns"].rolling(window=5).mean() - mean)*2/mean
     
     def __str__(self) -> str:
         return f"{self.__class__.__name__}_{self.n}"

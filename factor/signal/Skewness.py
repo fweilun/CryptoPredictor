@@ -18,7 +18,9 @@ class Skewness(Factor):
             self.n = price.size
 
         returns = price.apply(np.log).diff()
+        # returns = x["return"]
         skew = returns.rolling(window=self.n).skew()
+        
         return skew
         
     

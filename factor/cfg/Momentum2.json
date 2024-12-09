@@ -1,0 +1,15 @@
+{
+    "description": "volume returns(n)",
+    "signal_list": [
+        {"signal": "Momentum2","argument": {"fast": 2, "slow":3}},
+        {"signal": "Momentum2","argument": {"fast": 2, "slow":5}},
+        {"signal": "Momentum2","argument": {"fast": 2, "slow":10}},
+        {"signal": "Momentum2","argument": {"fast": 3, "slow":5}},
+        {"signal": "Momentum2","argument": {"fast": 3, "slow":15}},
+        {"signal": "Momentum2","argument": {"fast": 3, "slow":20}},
+        {"signal": "Momentum2","argument": {"fast": 5, "slow":8}},
+        {"signal": "Momentum2","argument": {"fast": 5, "slow":10}},
+        {"signal": "Momentum2","argument": {"fast": 5, "slow":30}},
+        {"signal": "Momentum2","argument": {"fast": 10, "slow":30}}
+    ]
+}

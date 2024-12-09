@@ -3,11 +3,6 @@
     "signal_list": [
         {"signal": "SpotFutureSpread", "argument": {"periods": [7]}},
         {"signal": "SpotFutureSpread", "argument": {"periods": [14]}},
-        {"signal": "SpotFutureSpread", "argument": {"periods": [30]}},
-        {"signal": "SpotFutureSpread", "argument": {"periods": [60]}},
-        {"signal": "SpotFutureSpread", "argument": {"periods": [90]}},
-        {"signal": "SpotFutureSpread", "argument": {"periods": [120]}},
-        {"signal": "SpotFutureSpread", "argument": {"periods": [180]}},
-        {"signal": "SpotFutureSpread", "argument": {"periods": [365]}}
+        {"signal": "SpotFutureSpread", "argument": {"periods": [30]}}
     ]
 }

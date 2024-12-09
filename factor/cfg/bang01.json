@@ -1,0 +1,17 @@
+{
+    "description": "funding rate with rsi",
+    "signal_list": [
+        {"signal": "FundingRatewithRSI", "argument": {"periods": [5],"rsi_period": 9}},
+        {"signal": "FundingRatewithRSI", "argument": {"periods": [10],"rsi_period": 9}},
+        {"signal": "FundingRatewithRSI", "argument": {"periods": [20],"rsi_period": 9}},
+        {"signal": "FundingRatewithRSI", "argument": {"periods": [30],"rsi_period": 9}},
+        {"signal": "FundingRatewithRSI", "argument": {"periods": [50],"rsi_period": 9}},
+        {"signal": "FundingRatewithRSI", "argument": {"periods": [100],"rsi_period": 9}},
+        {"signal": "FundingRatewithRSI", "argument": {"periods": [5],"rsi_period": 14}},
+        {"signal": "FundingRatewithRSI", "argument": {"periods": [10],"rsi_period": 14}},
+        {"signal": "FundingRatewithRSI", "argument": {"periods": [20],"rsi_period": 14}},
+        {"signal": "FundingRatewithRSI", "argument": {"periods": [30],"rsi_period": 14}},
+        {"signal": "FundingRatewithRSI", "argument": {"periods": [50],"rsi_period": 14}},
+        {"signal": "FundingRatewithRSI", "argument": {"periods": [100],"rsi_period": 14}}
+    ]
+}

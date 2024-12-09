@@ -1,0 +1,13 @@
+{
+    "description": "skewness of returns",
+    "signal_list": [
+        {"signal": "VwapSignal","argument": {"n": 3}},
+        {"signal": "VwapSignal","argument": {"n": 5}},
+        {"signal": "VwapSignal","argument": {"n": 10}},
+        {"signal": "VwapSignal","argument": {"n": 20}},
+        {"signal": "VwapSignal","argument": {"n": 50}},
+        {"signal": "VwapSignal","argument": {"n": 100}},
+        {"signal": "VwapSignal","argument": {"n": 200}},
+        {"signal": "VwapSignal","argument": {"n": 300}}
+    ]
+}

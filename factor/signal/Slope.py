@@ -29,7 +29,7 @@ class Slope(Factor):
         slopes = price.rolling(window=self.n).apply(
             lambda prices: np.polyfit(y, prices, 1)[0], raw=True
         )
-        return slopes
+        return slopes/(1+slopes.abs())
     
     def __str__(self) -> str:
         return f"{self.__class__.__name__}_{self.n}"

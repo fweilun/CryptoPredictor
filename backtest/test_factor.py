@@ -35,8 +35,12 @@ class FactorRunner:
     def __init__(self ,X=None, y=None, target=None, mode="default"):
         if mode == "default":
             train, test = Loader.make_not_overlap(target=TARGET, delay=DELAY, hours=HOURS, dtype="continuous")
+            test = test[start_date:end_date]
+            # print(start_date)
             self.X = train
             self.y = test
+            # print(test)
+            # exit()
         else:
             self.X = X
             self.y = y
@@ -122,16 +126,18 @@ def main():
     if args.factor_name == "all":
         _logger.info("Running tests for all factors.")
         factors_cls:List[Factor] = [
-            factor.weilun01,
-            factor.weilun02,
+            factor.Cross,
+            # factor.weilun01,
+            # factor.weilun02,
             factor.weilun03,
             factor.weilun04,
             factor.weilunta,
             factor.FundingRate,
             factor.MarketParticipation,
             factor.Momentum,
-            factor.Skewness,
-            factor.Slope,
+            factor.Momentum2,
+            # factor.Skewness,
+            # factor.Slope,
             factor.SpotFutureSpread,
             factor.VolatilityCrossMarket,
             factor.VolumeAnomaly,

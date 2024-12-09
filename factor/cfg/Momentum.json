@@ -4,10 +4,6 @@
         {"signal": "Momentum", "argument": {"periods": [5]}},
         {"signal": "Momentum", "argument": {"periods": [10]}},
         {"signal": "Momentum", "argument": {"periods": [20]}},
-        {"signal": "Momentum", "argument": {"periods": [30]}},
-        {"signal": "Momentum", "argument": {"periods": [50]}},
-        {"signal": "Momentum", "argument": {"periods": [100]}},
-        {"signal": "Momentum", "argument": {"periods": [200]}},
-        {"signal": "Momentum", "argument": {"periods": [250]}}
+        {"signal": "Momentum", "argument": {"periods": [30]}}
     ]
 }

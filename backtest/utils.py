@@ -50,7 +50,7 @@ class FactorTest:
         if not np.isnan(corr).any():
             return corr[0,1]
         
-        if (x[1:] - x[:-1]).abs().sum() == 0:
+        if len(x.dropna().unique()) == 1:
             return 0
         
         return pd.DataFrame([x, y]).T.dropna().corr().iloc[0,1]
