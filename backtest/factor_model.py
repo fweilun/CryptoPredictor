@@ -9,6 +9,7 @@ from typing import List, Dict
 from sklearn.linear_model import LassoCV, LinearRegression, RidgeCV
 # from backtest.test_factor import test1tafactor_by_class
 from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestRegressor
 from typing import List
 from config.load import load_config
 from backtest.test_factor import FactorRunner
@@ -258,12 +259,14 @@ class FactorModel:
         if self.__debug: print("fit transformation")
         x_train = self.__scalar.fit_transform(x_train)
         
-        model = RidgeCV(cv=5)
+        # model = RidgeCV(cv=5)
+        # model.fit(x_train, y)
+        model = RandomForestRegressor(n_estimators=100, random_state=42)
         model.fit(x_train, y)
         self.__model = model
         self.__signal_order = self.__scalar.feature_names_in_
         self.__factors = [fctr for fctr in self.all_factors if str(fctr) in self.__signal_order]
-        self.weights_dict = dict(zip(self.__factors, model.coef_))
+        # self.weights_dict = dict(zip(self.__factors, model.coef_))
         self.temp = selected_col
         
     
@@ -492,7 +495,7 @@ def main():
         factor.VwapSignal,
         # factor.weilunta,
         factor.FundingRate,
-        factor.StablecoinFlow,
+        # factor.StablecoinFlow,
         # factor.MarketParticipation,
         factor.Momentum,
         factor.Skewness,

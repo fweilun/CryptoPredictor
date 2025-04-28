@@ -3,6 +3,7 @@ import os
 import yfinance as yf
 import requests
 import numpy as np
+from data.db import get_connection, release_connection
 
 MODULE_DIR = os.path.dirname(__file__)
 STORAGE_DIR = os.path.join(MODULE_DIR, "storage")
@@ -111,7 +112,7 @@ class Loader:
         X["funding_rate"] = Loader.load_funding_rate(symbol=target)["fundingRate"]
         X["funding_rate"] = X["funding_rate"].bfill()
         X["funding_rate_ema0.05"] = X["funding_rate"].ewm(alpha=0.05).mean()
-        X["funding_rate_ema0.2"] = X["funding_rate"].ewm(alpha=0.2).mean()
+        X["funding_rate_ema0.2"] = X["funding_rate"].ewm(alpha=0.2).mean(.qw';,efwkvhhh)
 
         future_data = Loader.load_future_data(symbol=target)
         future_data = future_data.drop_duplicates(keep='first')
@@ -260,4 +261,23 @@ class Loader:
     def load_stock_data(cls, ticker:str="SPY"):
         return yf.download(ticker,start=cls.start_date,end=cls.end_date, interval="1h") 
     
+    @classmethod
+    def load_tick_data(cls, symbol:str, start:str, end:str):
+        conn = get_connection()
+        sql = """
+            select * from stock_tick_data WHERE symbol='%s' 
+            AND datetime > '%s'::DATE AND 
+            datetime < '%s'::DATE;
+        """ % (symbol, start, end)
+        
+        df = pd.read_sql_query(sql=sql, con=conn)
+        print(df)
+        exit()
+        return df
+
+if __name__ == "__main__":
+    df = Loader.load_tick_data(symbol="SPY", start="2024-01-01", end="2024-01-05")
+        
+        
+        
     

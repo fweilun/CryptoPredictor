@@ -1,17 +1,101 @@
 import yfinance as yf
 import pandas as pd
 from datetime import datetime
-import requests, json
+import requests, json, psycopg2, time
+from data.db import *
 from abc import ABC
 from typing import List
 from binance.spot import Spot
-import time
-import ccxt
 from config.symbols import Symbols
+from psycopg2.extras import execute_values
+from itertools import product
+import requests
+from bs4 import BeautifulSoup
 
 class Crawler(ABC):
     def __init__(self): ...
     def Get(self) -> pd.DataFrame: ...
+    
+    def batch_insert(self, df, table_name, batch_size=10000, show=True):
+        """ 高效批量插入数据到 PostgreSQL """
+        conn = get_connection()
+        records = df.values.tolist()
+        columns = ", ".join(df.columns)
+        insert_query = f"""
+        INSERT INTO {table_name} ({columns})
+        VALUES %s
+        """
+        if show:print("Start inserting values.")
+        with conn.cursor() as cursor:
+            execute_values(cursor, insert_query, records, page_size=batch_size)
+        conn.commit()
+        if show:print("End inserting values.")
+        release_connection(conn)
+
+class SingleStock:
+    create_table_sql = '''
+    CREATE TABLE IF NOT EXISTS stock_prices (
+        date DATE NOT NULL,             -- 日期
+        open NUMERIC,                   -- 開盤價
+        high NUMERIC,                   -- 最高價
+        low NUMERIC,                    -- 最低價
+        close NUMERIC,                  -- 收盤價
+        adj_close NUMERIC,              -- 調整後收盤價
+        volume BIGINT,                  -- 成交量
+        stock_id VARCHAR NOT NULL,      -- 股票代碼
+        PRIMARY KEY (date, stock_id)    -- 主鍵：日期 + 股票代碼，避免重複數據
+    );
+    '''
+    
+    def __init__(self, start_date: str = '2005-01-01', end_date: str = '2024-10-04', stock_id: str = "2330.TW"):
+        self.start_date = start_date
+        self.end_date = end_date
+        self.stock_id = stock_id
+
+    def get_stock_data(self) -> pd.DataFrame:
+        try:
+            data = yf.download(self.stock_id, start=self.start_date, end=self.end_date, interval='15m', auto_adjust=False)
+            data.reset_index(inplace=True)
+            data['StockID'] = self.stock_id
+            return data
+        except Exception as e:
+            print(f"Error fetching data for {self.stock_id}: {e}")
+            return pd.DataFrame()
+
+    def write_to_sql(self, data: pd.DataFrame):
+        if data.empty:
+            print("No data to write to the database.")
+            return
+
+        try:
+            # 建立資料庫連接
+            conn = get_connection()
+
+            # 將 DataFrame 寫入資料庫
+            with conn.cursor() as cursor:
+                for _, row in data.iterrows():
+                    cursor.execute(f"""
+                        INSERT INTO stock_prices (date, open, high, low, close, adj_close, volume, stock_id)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                        ON CONFLICT (date, stock_id) DO NOTHING;
+                    """, (
+                        row['Date'].item(),
+                        row['Open'].item(),
+                        row['High'].item(),
+                        row['Low'].item(),
+                        row['Close'].item(),
+                        row['Adj Close'].item(),
+                        row['Volume'].item(),
+                        row['StockID'].item()
+                    ))
+
+            # 提交交易
+            conn.commit()
+            print(f"Data successfully written to table.")
+        except Exception as e:
+            print(f"Error writing to the database: {e}")
+        finally:
+            release_connection(conn)
 
 class SingleUSStock(Crawler):
     def __init__(self,start_date:str = '2005-01-01', end_date:str='2024-10-04', stock_id:str="QQQ"):
@@ -20,7 +104,6 @@ class SingleUSStock(Crawler):
         self.stock_id = stock_id
     
     def Get(self) -> pd.DataFrame:
-        # etfs = ['SPY', 'DIA', 'QQQ']
         data = yf.download(self.stock_id, start=self.start_date, end=self.end_date, interval='1d')
         return data
 
@@ -225,24 +308,26 @@ class OpenInterest(Crawler):
 
         return df
 
-class StableCoin(Crawler):
-    def __init__(self):
-        ...
+# class StableCoin(Crawler):
+#     def __init__(self):
+#         ...
     
-    def Get(self) -> pd.DataFrame:
-        url = "https://stablecoins.llama.fi/stablecoincharts/all"
-        df = requests.get(url, params={"stablecoin": 1}).json()
+#     def Get(self) -> pd.DataFrame:
+#         url = "https://stablecoins.llama.fi/stablecoincharts/all"
+#         df = requests.get(url, params={"stablecoin": 1}).json()
 
-        df = [(i["date"], i["totalCirculatingUSD"]["peggedUSD"]) for i in df]
-        df = pd.DataFrame(df, columns=["timestamp", "totalCirculatingUSD"])
+#         df = [(i["date"], i["totalCirculatingUSD"]["peggedUSD"]) for i in df]
+#         df = pd.DataFrame(df, columns=["timestamp", "totalCirculatingUSD"])
 
-        df.set_index("timestamp", inplace=True)
-        df.index = pd.to_datetime(df.index.astype(float), unit="s")
-        df.sort_index()
+#         df.set_index("timestamp", inplace=True)
+#         df.index = pd.to_datetime(df.index.astype(float), unit="s")
+#         df.sort_index()
 
-        df["totalCirculatingUSD"] = df["totalCirculatingUSD"].astype(int)
+#         df["totalCirculatingUSD"] = df["totalCirculatingUSD"].astype(int)
 
-        return df
+#         return df
+
+
 
 class FearGreedIndex(Crawler):
     def __init__(self):
@@ -258,7 +343,167 @@ class FearGreedIndex(Crawler):
         df.sort_index()
         df["value"] = df["value"].astype(int)
         return df
+
+class ShareDistribution(Crawler):
     
+        
+    def __init__(self):
+        self._create_share_distribution_table()
+    
+    def Get(self, symbols=[]):
+        headers = {
+            'User-Agent':  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36'
+        }
+        rs = requests.session()
+        res = rs.get('https://www.tdcc.com.tw/portal/zh/smWeb/qryStock', headers = headers)
+        soup = BeautifulSoup(res.text, 'lxml')
+        valid_date = [v.get("value") for v in soup.find_all("option")]
+        
+        conn = get_connection()
+        for symbol, date in product(symbols, valid_date):
+            res = rs.get('https://www.tdcc.com.tw/portal/zh/smWeb/qryStock', headers = headers)
+            soup = BeautifulSoup(res.text, 'lxml')
+            payload = dict([ (e.get('name'), e.get('value')) for e in soup.select('input[type=hidden]')])
+            
+            print(date)
+            time.sleep(1)
+            payload['scaDate'] = date
+            payload['sqlMethod'] = 'StockNo'
+            payload['stockNo'] = str(symbol)
+
+            res2 = rs.post('https://www.tdcc.com.tw/portal/zh/smWeb/qryStock', headers = headers, data = payload)
+
+            dfs = pd.read_html(res2.text)
+            share_table = dfs[1]
+            
+            share_table.columns = ["", "holding_range", "holder_count", "share_count", "percentage"]
+            share_table = share_table.loc[:14,share_table.columns[1:]]
+            print(share_table)
+            share_table["holding_range"] = share_table["holding_range"].str.split('-').str[1]
+            share_table["holding_range"] = share_table["holding_range"].str.replace(',', '')
+            share_table.loc[14, "holding_range"] = "999999999"
+            share_table["holding_range"] = share_table["holding_range"].astype(int)
+            
+            for _, row in share_table.iterrows():
+                row_dict = row.to_dict()
+                row_dict["symbol"] = symbol
+                row_dict["date"] = f"'{date}'"
+                insert_query = '''
+                    INSERT INTO stock_distribution 
+                    (symbol, date, holding_range, holder_count, share_count, percentage)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (symbol, date, holding_range) DO NOTHING;
+                '''
+                
+                # 提取欄位值並確保資料型別正確
+                values = (
+                    row_dict["symbol"],
+                    row_dict["date"],
+                    row_dict["holding_range"],
+                    row_dict["holder_count"],
+                    row_dict["share_count"],
+                    row_dict["percentage"]
+                )
+
+                cursor = conn.cursor()
+                cursor.execute(insert_query, values)
+                
+                conn.commit()
+        release_connection(conn)
+
+    def _create_share_distribution_table(self):
+        create_table_sql = '''
+        CREATE TABLE IF NOT EXISTS stock_distribution (
+            symbol VARCHAR(10) NOT NULL,
+            date DATE NOT NULL,
+            holding_range VARCHAR(50) NOT NULL,
+            holder_count INT NOT NULL,
+            share_count BIGINT NOT NULL,
+            percentage DECIMAL(10, 2) NOT NULL,
+            PRIMARY KEY (symbol, date, holding_range) -- If needed, you can set a composite primary key
+        );
+        '''
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute(create_table_sql)
+        conn.commit()
+        release_connection(conn)
+
+class StockTickData(Crawler):
+    def __init__(self, dtype='raw'):
+        self.dtype = dtype
+    
+    def Get(self):
+        if self.dtype == 'raw':
+            df = self.readData()
+            self.batch_insert(
+                df,
+                table_name="stock_tick_data", 
+                batch_size=10000)
+            print('inserted raw data.')
+        
+    
+    def readData(self):
+        url = "https://api.kibot.com/?action=history&symbol=IVE&interval=tickbidask&bp=1&user=guest"
+        
+        print("Read data from url:%s." % (url))
+        try:
+            df = pd.read_csv(url, header=None, names=[
+                "date", "time", "price", "bid", "ask", "volume"
+            ])
+            # df = pd.read_csv("/Users/user/Desktop/CryptoPredictor/data/storage/SPY_tick.txt", header=None, names=[
+            #     "date", "time", "price", "bid", "ask", "volume"
+            # ])
+        except Exception as e:
+            print("Error %s" % e)
+            raise e
+        
+        print("Success reading data from url:%s." % (url))
+        df["datetime"] = pd.to_datetime(df["date"] + df["time"],format='%m/%d/%Y%H:%M:%S')
+        df["datetime"] = df["datetime"].dt.tz_localize('America/New_York').dt.tz_convert('UTC')
+        df["symbol"] = "SPY"
+        
+        return df[["symbol", "datetime", "price", "bid", "ask", "volume"]]
+    
+    @classmethod
+    def initStockTable(cls):
+        sql = """CREATE TABLE IF NOT EXISTS stock_tick_data(
+            symbol CHAR(8),       -- 股票代號，固定 8 字元長度
+            datetime TIMESTAMP,            -- 時間
+            price DECIMAL(18, 4),  -- 開盤價，精確到小數點後 4 位
+            bid DECIMAL(18, 4),  -- 最高價，精確到小數點後 4 位
+            ask DECIMAL(18, 4),   -- 最低價，精確到小數點後 4 位
+            volume INT,            -- 成交量，整數類型
+            PRIMARY KEY (datetime, symbol)    -- 主鍵：日期 + 股票代碼，避免重複數據
+        );"""
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute(sql)
+        conn.commit()
+        release_connection(conn)
+
+
+def create_stock_table():
+    try:
+        print("creating stock table.")
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute(SingleStock.create_table_sql)
+        conn.commit()
+        print("success creating stock table.")
+        release_connection(conn)
+    except Exception as e:
+        print(f"Error creating table: {e}.")
+
+
+def renew_stock():
+    start_date = "2020-01-01"
+    end_date = datetime.now().strftime('%Y-%m-%d')
+    stockCrawler = SingleStock(start_date=start_date, end_date=end_date, stock_id="SPY")
+    df = stockCrawler.get_stock_data()
+    stockCrawler.write_to_sql(df)
+
+
 def renew_data():
     start_date = "2020-01-01"
     # end_date = "2024-12-01"
@@ -266,6 +511,14 @@ def renew_data():
     base_path = "./data/storage"
     base = "USDT"
 
+    # Taiwan Stock data
+    stockCrawler = SingleStock(start_date=start_date, end_date=end_date, stock_id="AAPL")
+    df = stockCrawler.get_stock_data()
+    print(df)
+    stockCrawler.write_to_sql(df, )
+    crawler = ShareDistribution()
+    crawler.Get(["2330",])
+    
     # Base Data
     print(f'Spot Data:')
     binance_data = SpotData(symbol=Symbols.BTC.value + base, start_date=start_date, end_date=end_date)
@@ -282,7 +535,6 @@ def renew_data():
             continue
         base_df.to_csv(f"{base_path}/spot/{pair}.csv")
         
-    exit()
     
 
     symbols = []
@@ -372,4 +624,9 @@ def renew_data():
     stable_coin_df.to_csv(f"{base_path}/stablecoin/stablecoin.csv")
 
 if __name__ == "__main__":
-    renew_data()
+    StockTickData.initStockTable()
+    stockTickDataCrawler = StockTickData(dtype="raw")
+    stockTickDataCrawler.Get()
+
+    # create_stock_table()
+    # renew_stock()
